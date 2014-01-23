@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+ <meta name="description" content="Colorado College Catalog View using Redis Library Services Platform with design assistance by 
+  Aaron Schmidt and Influx">
+ <meta name="author" content="Jeremy Nelson">
+{% endblock %}
+
+{% block navbar %}
+ {% include 'snippets/header.html' %}
+ {% include 'snippets/search-logging.html' %}
+{% endblock %} 
+
+{% block body %}
+<div class="row">
+ {# START Search query display #}
+ <div class="col-md-12">
+   <h2 class="search-query" data-bind="visible: showResults">You searched for "<span class="search-terms" data-bind="text: searchQuery"></span>"
+    <span class="search-stats" >
+     <span data-bind="text: resultStartSlice"></span>-<span data-bind="text: resultEndSlice"></span>/<span data-bind="text: resultSize"></span>
+    <a href="#" data-bind="click: displayFilters" style="font-size: .75em"><span class="glyphicon glyphicon-forward"></span></a>
+    </span>
+   </h2>
+ {# END Search query display #}
+ </div>
+ {% include 'snippets/results.html' %}
+</div>
+{% endblock %}
+
+{% block footer %}
+ {% include 'snippets/footer.html' %}
+{% endblock %}
+
+{% block more_js %}
+<script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
+<script>
+  var catalogViewModel = new CatalogViewModel();
+  ko.applyBindings(catalogViewModel);
+</script>
+{% endblock %}
+

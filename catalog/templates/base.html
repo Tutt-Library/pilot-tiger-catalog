@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Colorado College TIGER Catalog
+	{% block head_title %}{% endblock %}
+    </title>
+    <meta name="description" content="Colorado College Library's TIGER Catalog" >
+    <meta name="author" content="">
+    {% block more_meta %}{% endblock %}
+    
+    <link rel="shortcut icon" href="{{  url_for('static', filename='ico/favicon.png') }}">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/default.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/catalog.css') }}" rel="stylesheet">
+ 
+    {% block more_css %}{% endblock %}
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="{{ url_for('static', filename='js/html5shiv.js') }}"></script>
+      <script src=" {{ url_for('static', filename='js/respond.min.js') }}"></script>
+    <![endif]-->
+  </head>
+  <body>
+   {# START main DIV #}
+   <div id="main">
+
+  {% block navbar %}
+    {% include 'snippets/navigation-action-bar.html' %}
+  {% endblock %} 
+  
+  {# START body container #}
+  <div class="container main-container"> 
+  {% block body %}{% endblock %}
+  {# END body container #}
+  </div>
+  
+  {# END main DIV #}
+  </div>
+
+  {% block footer %}
+  {# START footer DIV #}
+  <div id="footer">
+   <div class="container">
+     {% include 'snippets/footer-action-bar.html' %}
+   </div>
+  {# END footer DIV #}
+  </div> 
+ {% endblock %} 
+    {% block dialogs %}
+    {% include 'snippets/about.html' %}
+    {% include 'snippets/help.html' %}
+    {% include 'snippets/feedback.html' %}
+ {% endblock %} 
+ {% block more_dialogs %}{% endblock %}  
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/knockout.js') }}"></script>
+   {% block more_js %}{% endblock %} 
+  </body>
+</html>
