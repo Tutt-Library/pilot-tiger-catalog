@@ -41,7 +41,7 @@ function CatalogViewModel() {
       q: self.searchQuery(),
       page: self.pageNumber()
     }
-    $.post('/apps/catalog/search', 
+    $.post('/catalog/search', 
            data,
            function(server_response) {
             if(server_response['result'] == 'error'){
@@ -131,7 +131,7 @@ function CatalogViewModel() {
   self.resultEndSlice = ko.observable(5);
   self.resultSize = ko.observable(5);
 
-  self.showFilters = ko.observable(false);
+  self.showFilters = ko.observable(true);
   self.showResults = ko.observable(false);
 
   self.auSearch = function() {

@@ -1,7 +1,8 @@
 {# START Results row #}
-<div class="row" >
+<div class="row"  >
  <div class="col-md-4" data-bind="visible: showFilters">
-
+   <br>
+   {% include 'snippets/filter-panel.html' %}
  </div>
  <div class="col-md-1 result-nav" data-bind="visible: showResults">
    <button class="btn btn-lg"
