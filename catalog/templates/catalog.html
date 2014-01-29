@@ -32,8 +32,10 @@
 {% endblock %}
 
 {% block more_js %}
+<script src="{{ url_for('static', filename='js/jstree.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
 <script>
+  $(function () { $('#facetTree').jstree(); });
   var catalogViewModel = new CatalogViewModel();
   ko.applyBindings(catalogViewModel);
 </script>
