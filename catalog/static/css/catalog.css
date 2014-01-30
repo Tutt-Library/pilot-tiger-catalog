@@ -96,3 +96,19 @@ span.search-terms {
 
 img.img-result { height: 120px; width: auto; }
 img.img-result { height: auto; width: 90px; } 
+
+.facet { background-image:url('/static/img/silk-icons.png') !important;
+          float: left;
+          height: 18px !important;
+          width: 20px !important;
+          display: block;}
+
+.dvd {background-position: -561px -699px !important;}
+.electronic {background-position: -1262px -1192px !important;}
+.map {background-position: -842px -1140px !important;}
+.manuscript {background-position: -1263px -767px !important;}
+.music-cd {background-position: -281px -495px !important;}
+.newspaper {background-position: -982px -494px !important;}
+.photo {background-position: -1121px -1006px !important;}
+
+.thesis {background-position: -1264px -240px !important;}

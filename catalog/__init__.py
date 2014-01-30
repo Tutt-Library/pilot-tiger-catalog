@@ -15,7 +15,7 @@
 #-------------------------------------------------------------------------------
 
 from forms import BasicSearch
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 from flask.ext.mongokit import MongoKit
 
 from mongodb_helpers import get_marc
@@ -24,6 +24,13 @@ app = Flask('tiger_catalog')
 app.config.from_pyfile('tiger.cfg')
 
 db = MongoKit(app)
+
+@app.route('/search',
+           methods=['GET', 'POST'])
+def search():
+    return jsonify({'total': 0,
+                    'instances': [],
+                    'result': "OK"})
 
 @app.route('/')
 def home():

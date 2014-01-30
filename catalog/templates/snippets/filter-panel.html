@@ -1,18 +1,105 @@
-<div class="panel panel-primary">
+<div class="panel panel-primary" id="filter-panel">
   <div class="panel-heading">
-    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+    <a class="close" data-dismiss="alert" href="#filter-panel" aria-hidden="true">&times;</a>
     <h3 class="panel-title">Filters</h3>
   </div>
   <div class="panel-body">
    <div id="facetTree">
      <ul>
-      <li>Access</li>
+      <li>Access
+        <ul>
+          <li data-jstree='{"icon": "glyphicon glyphicon-home"}'>
+            In the Library</li>
+          <li data-jstree='{"icon": "glyphicon glyphicon-globe"}'>
+            Online</li>
+
+        </ul>  
+      </li>
       <li>Format
          <ul>
-
+           <li data-jstree='{"icon": "glyphicon glyphicon-book"}'>
+             Book</li>
+           <li data-jstree='{"icon": "facet dvd"}'>
+             DVDs</li>
+           <li data-jstree='{"icon": "facet newspaper"}'>Periodical
+            <ul>
+              <li>In Print</li>
+              <li data-jstree='{"icon": "facet electronic"}'>Online</li>
+            </ul>
+           </li>
+           <li data-jstree='{"icon": "facet manuscript"}'>
+            Manuscript
+           </li>
+           <li data-jstree='{"icon": "facet map"}'>
+            Map
+           </li>
+           <li data-jstree='{"icon": "facet music-cd"}'>
+            Music CD
+           </li>
+           <li data-jstree='{"icon": "glyphicon glyphicon-film"}'>
+             Movies</li>
+           <li data-jstree='{"icon": "glyphicon glyphicon-music"}'>
+             Musical Score</li>
+           <li>Music Album</li>
+           <li data-jstree='{"icon": "facet photo"}'>
+            Photo
+           </li>
+           <li data-jstree='{"icon": "facet thesis"}'>
+            Thesis
+           </li>
          </ul>
        </li>
+       <li>Topics</li>
+       <li>Location
+         <ul>
+           <li>Online</li>
+           <li>Government Documents</li>
+           <li>Music Library
+             <ul>
+<li>Reserves</li>
+<li>DVD</li>
+<li>Books and Scores</li>
+<li>Microforms</li>
+<li>Cassette</li>
+<li>Catalog Office</li>
+<li>Instrument Storage</li>
+<li>Oversize</li>
+<li>NC Books and Scores</li>
+<li>Reel Tape</li>
+<li>MiniScores</li>
+<li>Music CD</li>
+<li>Education DVD</li>
+<li>NC Music Mini Scores</li>
+<li>Reference</li>
+<li>Storage</li>
+<li>NC Storage</li>
+<li>CDROM</li>
+<li>Circ Desk</li>
+<li>Periodicals</li>
+<li>LP/SLP Room</li>
+               
 
+             </ul>
+           </li>
+           <li>Tutt 3rd Floor</li>
+           <li>Special Collections
+             <ul>
+               <li data-jstree='{"icon": "glyphicon glyphicon-headphones"}'>
+                 Audio (32)</li>
+               <li>Lincoln Room</li>
+               <li>CC Room</li>
+               <li>Colorado Room</li>
+               <li>Manuscripts</li>
+               <li>Offices</li>
+               <li>Rare</li> 
+             </ul> 
+           </li>
+         </ul>
+       </li>
+       <li>Call Number</li>
+       <li>Publication Year</li>
+       <li>Geographic Location</li>
+      </ul>
    </div>
   </div>
 </div>

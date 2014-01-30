@@ -34,14 +34,14 @@ function CatalogViewModel() {
   self.runSearch = function() {
     self.showError(false);
     self.searchResults.removeAll();
-    var csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+    var csrf_token = $('#csrf_token').val();
     var data = {
       csrfmiddlewaretoken: csrf_token,
 //      q_type: self.searchType(),
       q: self.searchQuery(),
       page: self.pageNumber()
     }
-    $.post('/catalog/search', 
+    $.post('/search', 
            data,
            function(server_response) {
             if(server_response['result'] == 'error'){
@@ -84,7 +84,8 @@ function CatalogViewModel() {
               } 
               $(".instance-action").popover({ html: true });
              } else {
-              self.contextHeading("Search Returned 0 Works"); 
+              self.showError(true);
+              self.errorMessage("Your search " + '"' + self.searchQuery() + '"' + " Returned 0 Works");
             }
         });
 
@@ -125,7 +126,7 @@ function CatalogViewModel() {
    self.runSearch();
   }
 
-  self.resultPaneSize = ko.observable("col-md-10");
+  self.resultPaneSize = ko.observable("col-md-8");
 
   self.resultStartSlice = ko.observable(1);
   self.resultEndSlice = ko.observable(5);
