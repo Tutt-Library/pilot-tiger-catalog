@@ -6,15 +6,27 @@
   <div class="panel-body">
    <div id="facetTree">
      <ul>
-      <li>Access
+     {% for facet in facets %}
+      <li>{{ facet.name }}
         <ul>
-          <li data-jstree='{"icon": "glyphicon glyphicon-home"}'>
-            In the Library</li>
-          <li data-jstree='{"icon": "glyphicon glyphicon-globe"}'>
-            Online</li>
-
+          {% for item in facet['items'] %}
+          <li {% if item.icon %}data-jstree='{"icon": "{{ item.icon }}"}'{% endif %}>
+           {{ item.label }} ({{ item['count']|pretty_number }}) 
+           {% if 'children' in item %}
+           <ul>
+             {% for child in item['children'] %}
+              <li {% if child.icon %}data-jstree='{"icon": "{{ child.icon }}"}'{% endif %}>
+               {{ child.label }} ({{ child['count']|pretty_number }})
+              </li>
+             {% endfor %}
+           </ul>
+           {% endif %}
+          </li>
+          {% endfor %}
         </ul>  
       </li>
+     {% endfor %}
+     {#
       <li>Format
          <ul>
            <li data-jstree='{"icon": "glyphicon glyphicon-book"}'>
@@ -99,6 +111,7 @@
        <li>Call Number</li>
        <li>Publication Year</li>
        <li>Geographic Location</li>
+     #}
       </ul>
    </div>
   </div>

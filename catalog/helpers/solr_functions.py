@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:        solr
+# Name:        solr_functions
 # Purpose:
 #
 # Author:      Jeremy Nelson
@@ -21,10 +21,6 @@ def __get_fields_subfields__(marc_rec,
                 if subfields.count(subfield) > 0:
                     output.append(row[subfield])
     return output
-
-
-
-
 
 def index_marc(solr_connection,
                marc):
