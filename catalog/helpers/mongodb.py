@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:        mongodb_helpers
+# Name:        mongodb
 # Purpose:     Module provides access to a MongoDB server
 #
 # Author:      Jeremy Nelson
@@ -28,5 +28,4 @@ def get_marc(db, marc_id):
         return marc_records.find_one({'_id': marc_id})
     except InvalidId, e:
         return
-
 

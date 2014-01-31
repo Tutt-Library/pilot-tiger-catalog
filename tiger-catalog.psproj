@@ -19,10 +19,14 @@ FileName=$[Project-Path]catalog\forms.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node2]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]catalog\mongodb_helpers.py
+FileName=$[Project-Path]catalog\helpers\mongodb.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node3]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]catalog\helpers\solr.py
 
 [Project\ChildNodes\Node0\ChildNodes]
-Count=3
+Count=4
 
 [Project\ChildNodes\Node1]
 ClassName=TProjectRunConfiguationsNode

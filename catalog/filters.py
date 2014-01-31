@@ -21,7 +21,7 @@ class Filter(object):
         self.subfilters = kwargs.get('subfilters', [])
 
 
-FACETS = [Access]
+FACETS = []
 
 def main():
     pass

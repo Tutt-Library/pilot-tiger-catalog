@@ -17,11 +17,15 @@
 from forms import BasicSearch
 from flask import Flask, jsonify, render_template
 from flask.ext.mongokit import MongoKit
+from flask.ext.solrpy import FlaskSolrpy
 
 from mongodb_helpers import get_marc
 
 app = Flask('tiger_catalog')
 app.config.from_pyfile('tiger.cfg')
+
+solr = FlaskSolrpy()
+solr.init_app(app)
 
 db = MongoKit(app)
 
