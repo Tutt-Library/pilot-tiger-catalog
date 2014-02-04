@@ -100,7 +100,9 @@ def get_facets(**kwargs):
     facets = [{"name":"Access",
                "items": access_facet(**kwargs)},
               {"name": "Location",
-               "items": location_facet(**kwargs)}]
+               "items": location_facet(**kwargs)},
+              {"name": "Topics",
+               "items": topic_facet(**kwargs)}]
     return facets
 
 def sub_location_facet(**kwargs):
@@ -172,6 +174,23 @@ def location_facet(**kwargs):
 
 def location_filter(set_key, redis_ds):
     return []
+
+def topic_facet(**kwargs):
+    facet = []
+    redis_ds = kwargs.get('redis_ds')
+    start = kwargs.get('start', 0)
+    end = kwargs.get('end', 24)
+    top_25 = redis_ds.zrevrange("filter:subjects:sorted",
+                                start,
+                                end,
+                                withscores=True)
+    for row in top_25:
+        filter_key = row[0]
+        facet.append({"label": redis_ds.hget("filter:subjects:labels",
+                                             filter_key),
+                      "count": int(row[1])})
+    return facet
+
 
 def create_access_filter(mongo_db,
                          redis_ds):
