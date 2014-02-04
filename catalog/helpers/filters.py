@@ -57,6 +57,44 @@ def access_filter(set_key, redis_ds):
     redis_ds.sinsertstore(intersection_key, set_key, 'filter:access:online')
     return intersection_key
 
+def classify_marc21_schema(record):
+    "Classifies a MARC21 record as specific Work class based on BIBFRAME website"
+    leader = record.leader
+    field007 = record['007']
+    field336 = record['336']
+    work_class = None
+    if leader[6] == 'a':
+        if field007 is not None:
+            test_value = field007.data[0]
+            if test_value == 'a' or test_value == 'd':
+                work_class = 'Map' # http://schema.org/Map
+            elif test_value == 'h': # Microfilm
+                work_class = 'Photograph' # http://schema.org/Photograph
+            elif ['m', 'v'].count(test_value) > 0:
+                work_class = 'VideoObject' # http://schema.org/VideoObject
+        else:
+            # Book is the default for Language Material
+            work_class =  'Book'
+    elif leader[6] == 'e' or leader[6] == 'f':
+        # Map is the default
+        work_class = 'Map'
+        if field007 is not None:
+            if field007.data[0] == 'r':
+                work_class = 'Dataset'
+    elif leader[6] == 'g':
+        work_class = 'Photograph'
+    elif leader[6] == 'i':
+        work_class = 'AudioObject' # http://schema.org/AudioObject
+    elif leader[6] == 'j':
+        work_class = 'MusicRecording'
+    elif leader[6] == 'k':
+        work_class = 'Photograph'
+    elif leader[6] == 'm':
+        work_class = 'SoftwareApplication'
+    if work_class is None:
+        work_class = 'CreativeWork'
+    return work_class
+
 
 def get_facets(**kwargs):
     facets = [{"name":"Access",
@@ -123,14 +161,13 @@ def location_facet(**kwargs):
         if redis_ds.sismember("filter:location:SpecialCollections",
                               location_key):
             continue
-        if location_key.startswith("filter:location:special"):
-            print(location_key)
-        facet.append({"label": redis_ds.hget("filter:location:labels",
-                                             location_key),
-                      "count": redis_ds.scard(location_key)})
+        if redis_ds.scard(location_key) > 20:
+            facet.append({"label": redis_ds.hget("filter:location:labels",
+                                                 location_key),
+                          "count": redis_ds.scard(location_key)})
 
     facet = sorted(facet, key=lambda x: x.get('count'), reverse=True)
-    return facet[:14]
+    return facet
 
 
 def location_filter(set_key, redis_ds):
