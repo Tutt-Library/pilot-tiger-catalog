@@ -52,6 +52,14 @@ def search():
                     'instances': solr_result.results,
                     'result': "OK"})
 
+@app.route("/Work/<work_id>")
+def work(work_id):
+    # Searches various Redis hashes for work_id match
+
+    return render_template('detail.html',
+                           work=creative_work,
+                           search_form=BasicSearch())
+
 @app.route('/')
 def home():
     facets = get_facets(redis_ds=redis_ds,
