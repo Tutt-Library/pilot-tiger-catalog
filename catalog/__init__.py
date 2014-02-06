@@ -43,13 +43,19 @@ def pretty_number(number):
 def search():
     query = request.form.get('q')
     solr_result = g.solr.query(query)
+    print(solr_result)
     for row in solr_result.results:
         row['workURL'] = ''
         row['coverURL'] = ''
         row['instanceLocation'] = ''
         row['instanceDetail'] = ''
+    if solr_result.start < 1:
+        page = 1
+    else:
+        page = solr_result.start
     return jsonify({'total': solr_result.numFound,
                     'instances': solr_result.results,
+                    'page': page,
                     'result': "OK"})
 
 @app.route("/Work/<work_id>")
