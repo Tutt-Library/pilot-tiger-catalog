@@ -43,7 +43,6 @@ def pretty_number(number):
 def search():
     query = request.form.get('q')
     solr_result = g.solr.query(query)
-    print(solr_result)
     for row in solr_result.results:
         row['workURL'] = ''
         row['coverURL'] = ''
@@ -57,6 +56,13 @@ def search():
                     'instances': solr_result.results,
                     'page': page,
                     'result': "OK"})
+
+@app.route('/suggest',
+           methods=['GET', 'POST'])
+def suggest():
+    if 'prefetch' in request.form:
+        print("Prefetch is {}".format(request.form.get('prefetch')))
+    return jsonify({})
 
 @app.route("/Work/<work_id>")
 def work(work_id):

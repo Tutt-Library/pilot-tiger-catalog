@@ -19,6 +19,22 @@ function CatalogViewModel() {
    { name: "Dewey Call Number", action: "dwSearch" },
    { name: "Medical Call Number", action: "medcSearch" },
    { name: "OCLC Number", action: "oclcSearch" }]);
+
+  // Support for Twitter's typeahead.js
+  self.catalogEntities = new Bloodhound({
+   datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
+   queryTokenizer: Bloodhound.tokenizers.whitespace,
+   remote: 'suggest?q=%QUERY',
+   prefetch: 'suggest?prefetch=alpha'
+  });
+
+  self.catalogEntities.initialize();
+
+  $('.typeahead').typeahead(null, {
+    displayKey: 'value',
+    source: self.catalogEntities.ttAdapter()
+   });
+
  
   self.searchQuery = ko.observable();
   self.showError = ko.observable(false);
