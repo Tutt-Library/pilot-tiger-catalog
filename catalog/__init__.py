@@ -15,54 +15,31 @@
 #-------------------------------------------------------------------------------
 import redis
 
-from forms import BasicSearch
+from solr_search.forms import BasicSearch
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import url_for
 from flask.ext.mongokit import MongoKit
-from flask.ext.solrpy import FlaskSolrpy
 
 from helpers.filters import get_facets
-from helpers.mongodb import get_marc
+
+from patron import patron, login_manager
+from solr_search import solr, solr_search
 
 app = Flask('tiger_catalog')
 app.config.from_pyfile('tiger.cfg')
+app.register_blueprint(patron)
+app.register_blueprint(solr_search)
 
-solr = FlaskSolrpy()
 solr.init_app(app)
+login_manager.init_app(app)
 
-db = MongoKit(app)
+mongo_storage = MongoKit(app)
 redis_ds = redis.StrictRedis(app.config['REDIS_HOST'],
                              app.config['REDIS_PORT'])
 
 @app.template_filter('pretty_number')
 def pretty_number(number):
     return "{:,}".format(number)
-
-@app.route('/search',
-           methods=['GET', 'POST'])
-def search():
-    query = request.form.get('q')
-    solr_result = g.solr.query(query)
-    for row in solr_result.results:
-        row['workURL'] = ''
-        row['coverURL'] = ''
-        row['instanceLocation'] = ''
-        row['instanceDetail'] = ''
-    if solr_result.start < 1:
-        page = 1
-    else:
-        page = solr_result.start
-    return jsonify({'total': solr_result.numFound,
-                    'instances': solr_result.results,
-                    'page': page,
-                    'result': "OK"})
-
-@app.route('/suggest',
-           methods=['GET', 'POST'])
-def suggest():
-    if 'prefetch' in request.form:
-        print("Prefetch is {}".format(request.form.get('prefetch')))
-    return jsonify({})
 
 @app.route("/Work/<work_id>")
 def work(work_id):
@@ -75,7 +52,7 @@ def work(work_id):
 @app.route('/')
 def home():
     facets = get_facets(redis_ds=redis_ds,
-                        mongo_collection=db.marc_records)
+                        mongo_collection=mongo_storage.marc_records)
     return render_template('catalog.html',
                            facets=facets,
                            search_form=BasicSearch(),

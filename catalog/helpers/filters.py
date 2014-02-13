@@ -9,7 +9,7 @@
 # Copyright:   (c) Jeremy Nelson 2014
 # Licence:     MIT
 #-------------------------------------------------------------------------------
-from solr_functions import __get_fields_subfields__
+##from solr_functions import __get_fields_subfields__
 from tutt_maps import *
 import datetime
 import re
