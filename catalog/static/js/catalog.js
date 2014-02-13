@@ -40,11 +40,21 @@ function CatalogViewModel() {
   self.showError = ko.observable(false);
 
   // Handlers for Search
-  self.searchResults = ko.observableArray(); 
+  self.searchResults = ko.observableArray();
+  self.searchSlides = ko.observableArray(); 
 
   self.newSearch = function() {
    self.pageNumber(1);
    self.runSearch();
+  }
+
+  self.prettyNumber = function(str) {
+    var x = str.toString();
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x)) {
+        x = x.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x;
   }
 
   self.runSearch = function() {
@@ -66,38 +76,22 @@ function CatalogViewModel() {
              return;
             }
             
-            self.resultSize(server_response["total"]);
-            if(server_response["total"] < 5) {
-              self.resultEndSlice(server_response["total"]);
-              self.activeNext(false);
-            } else {
-               var calcEndSlice = parseInt(server_response['page']) * 5;
-               if(calcEndSlice >= parseInt(server_response["total"])) {
-                 calcEndSlice = parseInt(server_response["total"]);
-                 self.activeNext(false);
-               } else {
-                 self.activeNext(true);
-               }
-               self.resultEndSlice(calcEndSlice);  
-            }
-
-            var startSlice = parseInt(self.resultEndSlice()) - 5;
-            if(startSlice < 1) { 
-              startSlice = 1; 
-              self.activePrevious(false);
-            } else {
-              self.activePrevious(true);
-            }
-            self.resultStartSlice(startSlice); 
+            self.resultSize(self.prettyNumber(server_response["total"]));
             self.pageNumber(server_response['page']); 
-                       
             if(server_response["instances"].length > 0) {
                self.showResults(true);
+               var activeSlide = Array();
                for(instance_num in server_response['instances']) {
                  var instance = server_response['instances'][instance_num];
-                 
-                 self.searchResults.push(instance);
-              } 
+                 activeSlide.push(instance);
+                 if(instance_num%4 == 0 && instance_num > 0) { 
+                   self.searchSlides.push({'searchResults': activeSlide});
+                   activeSlide = Array();
+                 }
+               }
+               if(activeSlide.length > 0) {
+                 self.searchSlides.push({'searchResults': activeSlide});
+               } 
               $(".instance-action").popover({ html: true });
              } else {
               self.showError(true);
