@@ -15,6 +15,7 @@
 #-------------------------------------------------------------------------------
 import redis
 
+from bson import ObjectId
 from solr_search.forms import BasicSearch
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import url_for
@@ -43,8 +44,10 @@ def pretty_number(number):
 
 @app.route("/Work/<work_id>")
 def work(work_id):
-    # Searches various Redis hashes for work_id match
-
+    # Searches various MongoDB and Redis hashes for work_id match
+    creative_work = mongo_storage.marc_records.find_one(
+        {"_id": ObjectId(work_id)})
+    print(creative_work, mongo_storage.marc_records.count())
     return render_template('detail.html',
                            work=creative_work,
                            search_form=BasicSearch())

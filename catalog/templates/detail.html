@@ -16,6 +16,7 @@
   <div class="col-md-8">
    <div class="well well-sm">
      <h2>{% if work.headline %}{{ work.headline }}{% else %}{{ work.name }}{% endif %}</h2>
+     <p class="lead">About this record {{ work['recordInfo'].get('recordOrigin') }}</p>
 
 
    </div>

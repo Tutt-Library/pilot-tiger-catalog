@@ -1,3 +1,12 @@
+function groupify(a, n) {
+    var len = a.length,out = [], i = 0;
+    while (i < len) {
+        var size = Math.ceil((len - i) / n--);
+        out.push(a.slice(i, i += size));
+    }
+    return out;
+}
+
 function CatalogViewModel() {
   self = this;
   self.contextHeading = ko.observable("Default Content Heading");
@@ -25,6 +34,8 @@ function CatalogViewModel() {
    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
    queryTokenizer: Bloodhound.tokenizers.whitespace,
    remote: 'suggest?q=%QUERY',
+//   filter: function(response) { alert("Results are " + response['results']);
+//                                return $.map(response['results'], function(row) { return row['value']; }); },
    prefetch: 'suggest?prefetch=alpha'
   });
 
@@ -75,23 +86,17 @@ function CatalogViewModel() {
              self.errorMessage("Error with search: " + server_response['text']);
              return;
             }
-            
+            self.searchSlides.removeAll(); 
             self.resultSize(self.prettyNumber(server_response["total"]));
             self.pageNumber(server_response['page']); 
             if(server_response["instances"].length > 0) {
                self.showResults(true);
                var activeSlide = Array();
-               for(instance_num in server_response['instances']) {
-                 var instance = server_response['instances'][instance_num];
-                 activeSlide.push(instance);
-                 if(instance_num%4 == 0 && instance_num > 0) { 
-                   self.searchSlides.push({'searchResults': activeSlide});
-                   activeSlide = Array();
-                 }
+               var instances = server_response['instances'];
+               var groups = groupify(instances, 2);
+               for(group_num in groups) {
+                  self.searchSlides.push({'searchResults': groups[group_num]});
                }
-               if(activeSlide.length > 0) {
-                 self.searchSlides.push({'searchResults': activeSlide});
-               } 
               $(".instance-action").popover({ html: true });
              } else {
               self.showError(true);
