@@ -16,8 +16,13 @@
   </div>
  </div>
  <div class="col-md-2 col-md-offset-5 user-log-btn" >
-   <a class="pull-right"
+   <a class="pull-right" data-bind="visible: !logging(), click: showLogin"
       href="#">Log in</a>
+   <form data-bind="visible: logging, hasFocus: logging">
+     <label>Last Name</label><input><br>
+     <label>TIGER number</label><input >
+   </form>
+   </input>
   {# <a class="pull-right"
       href="{% if patron.is_authenticated %}logout">Log out{% else %}login>Log in{% endif %}</a> #}
  </div>

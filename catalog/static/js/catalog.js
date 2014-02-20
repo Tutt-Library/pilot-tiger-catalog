@@ -7,6 +7,10 @@ function groupify(a, n) {
     return out;
 }
 
+function inViewPoint(index) {
+
+}
+
 function CatalogViewModel() {
   self = this;
   self.contextHeading = ko.observable("Default Content Heading");
@@ -49,14 +53,89 @@ function CatalogViewModel() {
  
   self.searchQuery = ko.observable();
   self.showError = ko.observable(false);
+   
 
   // Handlers for Search
+
+  self.inViewPoint = function(index) {
+    var index1 = parseInt(index) + 1;
+    if(index1 <= self.resultEndSlice()) { 
+      if(index1 >= self.resultStartSlice()) {
+        return true;
+      }
+    }
+    return false;  
+  }
+
   self.searchResults = ko.observableArray();
   self.searchSlides = ko.observableArray(); 
 
   self.newSearch = function() {
    self.pageNumber(1);
    self.runSearch();
+  }
+
+  self.isPreviousPage = ko.observable(false);
+  self.isNextPage = ko.observable(true);
+
+  self.showItem = function(thumbnail) {
+     var index = self.searchResult().indexOf(thumbnail);
+     console.log(index, thumbnail['show']);
+     return self.inViewPoint(index);
+  }
+
+  self.nextPage = function() {
+    self.isPreviousPage(true);
+    var current_start = self.resultStartSlice();
+    var current_end = self.resultEndSlice();
+    var next_start = current_start+4;
+    var next_end = current_end+4;
+    for(row in self.searchResults()) {
+      entity = self.searchResults()[row];
+      entity['show'] = self.inViewPoint(row);
+      if(self.inViewPoint(row)) {
+         $(entity).css('display', 'block');
+         
+      } else {
+         $(entity).css('display', 'none');
+      }
+      //console.log($(entity).show());
+    }
+    if(next_end >= self.resultSize()) {
+      self.isNextPage(false);
+      next_start = current_start+4;
+      next_end = self.resultSize();
+    }
+    
+    self.resultStartSlice(next_start);
+    self.resultEndSlice(next_end);
+    var csrf_token = $('#csrf_token').val();
+    var data = {
+      csrfmiddlewaretoken: csrf_token,
+      q: self.searchQuery(),
+      page: self.pageNumber()+1
+    }
+    
+
+  }
+
+  self.logging = ko.observable(false);
+  self.showLogin = function() { self.logging(true) }
+
+  self.previousPage = function() {
+    self.isNextPage(true);
+    var current_start = self.resultStartSlice();
+    var current_end = self.resultEndSlice();
+    var previous_start = current_start-4;
+    var previous_end = current_end-4;
+    if(previous_start < 1) {
+       previous_start = 1;
+       previous_end = 4;
+       self.isPreviousPage(false);
+    }
+    self.resultStartSlice(previous_start);
+    self.resultEndSlice(previous_end);
+
   }
 
   self.prettyNumber = function(str) {
@@ -91,12 +170,20 @@ function CatalogViewModel() {
             self.pageNumber(server_response['page']); 
             if(server_response["instances"].length > 0) {
                self.showResults(true);
-               var activeSlide = Array();
+       //        var activeSlide = Array();
                var instances = server_response['instances'];
-               var groups = groupify(instances, 2);
-               for(group_num in groups) {
-                  self.searchSlides.push({'searchResults': groups[group_num]});
+               for(index in instances) {
+                 var instance = instances[index];
+                 instance['show'] = false;
+                 if(self.inViewPoint(index)) {
+                   instance['show'] = true;
+                 }
+                 self.searchResults.push(instance);
                }
+       //        var groups = groupify(instances, 2);
+       //        for(group_num in groups) {
+       //           self.searchSlides.push({'searchResults': groups[group_num]});
+       //        }
               $(".instance-action").popover({ html: true });
              } else {
               self.showError(true);
@@ -144,8 +231,8 @@ function CatalogViewModel() {
   self.resultPaneSize = ko.observable("col-md-8");
 
   self.resultStartSlice = ko.observable(1);
-  self.resultEndSlice = ko.observable(5);
-  self.resultSize = ko.observable(5);
+  self.resultEndSlice = ko.observable(4);
+  self.resultSize = ko.observable(4);
 
   self.showFilters = ko.observable(true);
   self.showResults = ko.observable(false);

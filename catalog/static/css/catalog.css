@@ -10,6 +10,15 @@ footer a {
  color: rgb(5, 163, 206);
 } 
 
+a.result-slide-btn {
+  height: 150px; 
+  margin-top: 150px
+}
+
+a.result-slide-btn span {
+  margin-top: 50px;
+}
+
 .form-search {
  background-color: rgb(51, 51, 51);
  border-top-right-radius: 1em;
