@@ -29,7 +29,10 @@
  {# END Search query display #}
  </div>
 </div>
-<div class="row">
+<div class="row" >
+ <div class="col-md-8 col-md-offset-3">
+  <img src="{{ url_for('static', filename='img/cc-logo.png') }}" >
+ </div>
  {% include 'snippets/new-results.html' %}
 </div>
 {% endblock %}

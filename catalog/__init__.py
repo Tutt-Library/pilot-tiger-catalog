@@ -13,16 +13,17 @@
 # Copyright:   (c) Jeremy Nelson, Colorado College 2014
 # Licence:     MIT
 #-------------------------------------------------------------------------------
+import os
 import redis
 
 from bson import ObjectId
 from solr_search.forms import BasicSearch
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import url_for
-from flask.ext.mongokit import MongoKit
+from flask.ext.mongokit import Connection, MongoKit
 
 from helpers.filters import get_facets
-
+from mongo_data import get_cover_art_image
 from patron import patron, login_manager
 from solr_search import solr, solr_search
 
@@ -34,7 +35,8 @@ app.register_blueprint(solr_search)
 solr.init_app(app)
 login_manager.init_app(app)
 
-mongo_storage = MongoKit(app)
+mongo_storage  = Connection(app.config["MONGODB_HOST"])
+
 redis_ds = redis.StrictRedis(app.config['REDIS_HOST'],
                              app.config['REDIS_PORT'])
 
@@ -42,20 +44,36 @@ redis_ds = redis.StrictRedis(app.config['REDIS_HOST'],
 def pretty_number(number):
     return "{:,}".format(number)
 
+@app.route('/CoverArt/<cover_id>')
+def cover_art(cover_id):
+    entity_id, ext = os.path.splitext(cover_id)
+    if ext.startswith(".jpg"):
+        mimetype = 'image/jpg'
+    else:
+        mimetype = 'image/png'
+    raw_image = get_cover_art_image(mongo_storage.bibframe,
+                                    entity_id)
+    if not raw_image:
+        abort(404)
+    return Request(raw_image, mimetype=mimetype)
+
 @app.route("/Work/<work_id>")
 def work(work_id):
     # Searches various MongoDB and Redis hashes for work_id match
-    creative_work = mongo_storage.marc_records.find_one(
+    marc_db = getattr(mongo_storage,
+                      app.config["MONGODB_DATABASE"])
+    creative_work = marc_db.marc_records.find_one(
         {"_id": ObjectId(work_id)})
-    print(creative_work, mongo_storage.marc_records.count())
     return render_template('detail.html',
                            work=creative_work,
                            search_form=BasicSearch())
 
 @app.route('/')
 def home():
+    marc_db = getattr(mongo_storage,
+                      app.config["MONGODB_DATABASE"])
     facets = get_facets(redis_ds=redis_ds,
-                        mongo_collection=mongo_storage.marc_records)
+                        mongo_collection=marc_db.marc_records)
     return render_template('catalog.html',
                            facets=facets,
                            search_form=BasicSearch(),
