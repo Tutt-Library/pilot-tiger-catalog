@@ -7,8 +7,17 @@ function groupify(a, n) {
     return out;
 }
 
-function inViewPoint(index) {
 
+function ResultItem(searchResult) {
+   self = this;
+   self.author = ko.observableArray(searchResult['author']);
+   self.coverURL = ko.observable(searchResult['coverURL']);
+   self.instanceDetail = ko.observable(searchResult['instanceDetail']);
+   self.instanceLocation = ko.observable(searchResult['instanceLocation']);
+   self.show = ko.observable(searchResult['show']);
+   self.title = ko.observable(searchResult['title']);
+   self.topics = ko.observable(searchResult['topics']);
+   self.workURL = ko.observable(searchResult['workURL']);
 }
 
 function CatalogViewModel() {
@@ -51,9 +60,19 @@ function CatalogViewModel() {
    });
 
  
+  
+  self.resultPaneSize = ko.observable("col-md-8");
+
+  self.resultStartSlice = ko.observable(1);
+  self.resultEndSlice = ko.observable(4);
+  self.resultSize = ko.observable(4);
+
+  self.showFilters = ko.observable(true);
+  self.showResults = ko.observable(false);
+
   self.searchQuery = ko.observable();
   self.showError = ko.observable(false);
-   
+ 
 
   // Handlers for Search
 
@@ -94,6 +113,7 @@ function CatalogViewModel() {
       entity = self.searchResults()[row];
       entity['show'] = self.inViewPoint(row);
       if(self.inViewPoint(row)) {
+         console.log("In view-point: " + entity);
          $(entity).css('display', 'block');
          
       } else {
@@ -175,10 +195,11 @@ function CatalogViewModel() {
                for(index in instances) {
                  var instance = instances[index];
                  instance['show'] = false;
+                 console.log(instance['title'], index, self.inViewPoint);
                  if(self.inViewPoint(index)) {
                    instance['show'] = true;
                  }
-                 self.searchResults.push(instance);
+                 self.searchResults.push(ResultItem(instance));
                }
        //        var groups = groupify(instances, 2);
        //        for(group_num in groups) {
@@ -228,14 +249,6 @@ function CatalogViewModel() {
    self.runSearch();
   }
 
-  self.resultPaneSize = ko.observable("col-md-8");
-
-  self.resultStartSlice = ko.observable(1);
-  self.resultEndSlice = ko.observable(4);
-  self.resultSize = ko.observable(4);
-
-  self.showFilters = ko.observable(true);
-  self.showResults = ko.observable(false);
 
   self.auSearch = function() {
   }
