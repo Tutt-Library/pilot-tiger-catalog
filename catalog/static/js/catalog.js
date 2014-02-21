@@ -9,15 +9,14 @@ function groupify(a, n) {
 
 
 function ResultItem(searchResult) {
-   self = this;
-   self.author = ko.observableArray(searchResult['author']);
-   self.coverURL = ko.observable(searchResult['coverURL']);
-   self.instanceDetail = ko.observable(searchResult['instanceDetail']);
-   self.instanceLocation = ko.observable(searchResult['instanceLocation']);
-   self.show = ko.observable(searchResult['show']);
-   self.title = ko.observable(searchResult['title']);
-   self.topics = ko.observable(searchResult['topics']);
-   self.workURL = ko.observable(searchResult['workURL']);
+   author = ko.observableArray(searchResult['author']);
+   coverURL = ko.observable(searchResult['coverURL']);
+   instanceDetail = ko.observable(searchResult['instanceDetail']);
+   instanceLocation = ko.observable(searchResult['instanceLocation']);
+   show = ko.observable(searchResult['show']);
+   title = ko.observable(searchResult['title']);
+   topics = ko.observable(searchResult['topics']);
+   workURL = ko.observable(searchResult['workURL']);
 }
 
 function CatalogViewModel() {
@@ -99,7 +98,6 @@ function CatalogViewModel() {
 
   self.showItem = function(thumbnail) {
      var index = self.searchResult().indexOf(thumbnail);
-     console.log(index, thumbnail['show']);
      return self.inViewPoint(index);
   }
 
@@ -109,26 +107,19 @@ function CatalogViewModel() {
     var current_end = self.resultEndSlice();
     var next_start = current_start+4;
     var next_end = current_end+4;
-    for(row in self.searchResults()) {
-      entity = self.searchResults()[row];
-      entity['show'] = self.inViewPoint(row);
-      if(self.inViewPoint(row)) {
-         console.log("In view-point: " + entity);
-         $(entity).css('display', 'block');
-         
-      } else {
-         $(entity).css('display', 'none');
-      }
-      //console.log($(entity).show());
-    }
     if(next_end >= self.resultSize()) {
       self.isNextPage(false);
-      next_start = current_start+4;
+      next_start = current_start;
       next_end = self.resultSize();
     }
-    
     self.resultStartSlice(next_start);
     self.resultEndSlice(next_end);
+    var affectedResults = self.searchResults().slice(current_start, next_end+1);
+    for(index in affectedResults) {
+      entity = affectedResults[index];
+      
+      console.log(entity, index);
+    }
     var csrf_token = $('#csrf_token').val();
     var data = {
       csrfmiddlewaretoken: csrf_token,
@@ -190,21 +181,15 @@ function CatalogViewModel() {
             self.pageNumber(server_response['page']); 
             if(server_response["instances"].length > 0) {
                self.showResults(true);
-       //        var activeSlide = Array();
                var instances = server_response['instances'];
                for(index in instances) {
                  var instance = instances[index];
                  instance['show'] = false;
-                 console.log(instance['title'], index, self.inViewPoint);
                  if(self.inViewPoint(index)) {
                    instance['show'] = true;
                  }
-                 self.searchResults.push(ResultItem(instance));
+                 self.searchResults.push(new ResultItem(instance));
                }
-       //        var groups = groupify(instances, 2);
-       //        for(group_num in groups) {
-       //           self.searchSlides.push({'searchResults': groups[group_num]});
-       //        }
               $(".instance-action").popover({ html: true });
              } else {
               self.showError(true);
