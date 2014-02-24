@@ -75,6 +75,16 @@ function CatalogViewModel() {
 
   // Handlers for Search
 
+  self.displayResultView = function() {
+	$.map($('.result-div'), function(n ,i) {
+	  if(!self.inViewPoint(parseInt(i))) {
+	    $(n).css('display', 'none');
+	  } else {
+	    $(n).css('display', 'block');
+	  }
+	});
+ }
+  
   self.inViewPoint = function(index) {
     var index1 = parseInt(index) + 1;
     if(index1 <= self.resultEndSlice()) { 
@@ -95,12 +105,7 @@ function CatalogViewModel() {
 
   self.isPreviousPage = ko.observable(false);
   self.isNextPage = ko.observable(true);
-
-  self.showItem = function(thumbnail) {
-     var index = self.searchResult().indexOf(thumbnail);
-     return self.inViewPoint(index);
-  }
-
+  
   self.nextPage = function() {
     self.isPreviousPage(true);
     var current_start = self.resultStartSlice();
@@ -114,20 +119,33 @@ function CatalogViewModel() {
     }
     self.resultStartSlice(next_start);
     self.resultEndSlice(next_end);
-    var affectedResults = self.searchResults().slice(current_start, next_end+1);
-    for(index in affectedResults) {
-      entity = affectedResults[index];
-      
-      console.log(entity, index);
-    }
+	self.displayResultView();
+	console.log(self.resultSize() , self.searchResults().length);
+	if(self.resultSize() <= self.searchResults().length) {
+	  return;
+	}
     var csrf_token = $('#csrf_token').val();
     var data = {
       csrfmiddlewaretoken: csrf_token,
       q: self.searchQuery(),
-      page: self.pageNumber()+1
+      page: self.pageNumber()+8
     }
-    
-
+    $.post('/search', 
+           data,
+           function(server_response) {
+            if(server_response['result'] == 'error'){
+             self.showError(true);
+             self.errorMessage("Error with search: " + server_response['text']);
+             return;
+            };
+			var instances = server_response['instances'];
+            for(index in instances) {
+                 var instance = instances[index];
+                 self.searchResults.push(new ResultItem(instance));
+            }
+			self.displayResultView();
+			self.pageNumber(self.pageNumber()+8);
+         });
   }
 
   self.logging = ko.observable(false);
@@ -146,7 +164,7 @@ function CatalogViewModel() {
     }
     self.resultStartSlice(previous_start);
     self.resultEndSlice(previous_end);
-
+	self.displayResultView();
   }
 
   self.prettyNumber = function(str) {
@@ -176,7 +194,7 @@ function CatalogViewModel() {
              self.errorMessage("Error with search: " + server_response['text']);
              return;
             }
-            self.searchSlides.removeAll(); 
+            self.searchResults.removeAll(); 
             self.resultSize(self.prettyNumber(server_response["total"]));
             self.pageNumber(server_response['page']); 
             if(server_response["instances"].length > 0) {
@@ -184,13 +202,10 @@ function CatalogViewModel() {
                var instances = server_response['instances'];
                for(index in instances) {
                  var instance = instances[index];
-                 instance['show'] = false;
-                 if(self.inViewPoint(index)) {
-                   instance['show'] = true;
-                 }
                  self.searchResults.push(new ResultItem(instance));
                }
               $(".instance-action").popover({ html: true });
+			  self.displayResultView();
              } else {
               self.showError(true);
               self.errorMessage("Your search " + '"' + self.searchQuery() + '"' + " Returned 0 Works");
