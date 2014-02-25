@@ -4,3 +4,6 @@
 [submodule "catalog/solr_search"]
 	path = catalog/solr_search
 	url = git@github.com:jermnelson/solr-search-blueprint.git
+[submodule "mongo_data"]
+	path = mongo_data
+	url = git@github.com:jermnelson/mongo-semantic-datastore.git
