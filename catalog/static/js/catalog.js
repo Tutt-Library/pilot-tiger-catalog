@@ -97,10 +97,10 @@ function CatalogViewModel() {
 
   self.searchResults = ko.observableArray();
   self.searchSlides = ko.observableArray(); 
-
+  self.shardSize = ko.observable(8);
   self.newSearch = function() {
-   self.pageNumber(1);
-   self.runSearch();
+  self.pageNumber(1);
+  self.runSearch();
   }
 
   self.isPreviousPage = ko.observable(false);
@@ -128,7 +128,7 @@ function CatalogViewModel() {
     var data = {
       csrfmiddlewaretoken: csrf_token,
       q: self.searchQuery(),
-      page: self.pageNumber()+8
+      page: self.pageNumber()+self.shardSize()
     }
     $.post('/search', 
            data,
@@ -138,13 +138,14 @@ function CatalogViewModel() {
              self.errorMessage("Error with search: " + server_response['text']);
              return;
             };
-			var instances = server_response['instances'];
-            for(index in instances) {
-                 var instance = instances[index];
-                 self.searchResults.push(new ResultItem(instance));
+	   var instances = server_response['instances'];
+           for(index in instances) {
+              var instance = instances[index];
+              self.searchResults.push(new ResultItem(instance));
             }
-			self.displayResultView();
-			self.pageNumber(self.pageNumber()+8);
+           $(".instance-action").popover({ html: true });
+	   self.displayResultView();
+           self.pageNumber(self.pageNumber()+self.shardSize());
          });
   }
 
@@ -155,11 +156,11 @@ function CatalogViewModel() {
     self.isNextPage(true);
     var current_start = self.resultStartSlice();
     var current_end = self.resultEndSlice();
-    var previous_start = current_start-4;
-    var previous_end = current_end-4;
+    var previous_start = current_start-(self.shardSize() / 2);
+    var previous_end = current_end-(self.shardSize() / 2);
     if(previous_start < 1) {
        previous_start = 1;
-       previous_end = 4;
+       previous_end = self.shardSize();
        self.isPreviousPage(false);
     }
     self.resultStartSlice(previous_start);
