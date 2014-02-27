@@ -19,18 +19,21 @@ import redis
 from bson import ObjectId
 from solr_search.forms import BasicSearch
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
-from flask import url_for
+from flask import Response, url_for
 from flask.ext.mongokit import Connection, MongoKit
 
 from helpers.filters import get_facets
-from mongo_data import get_cover_art_image
+from mongo_datastore import mongo_datastore, get_cover_art_image
+from mongo_datastore import check_for_cover_art, get_item_details
 from patron import patron, login_manager
 from solr_search import solr, solr_search
 
 app = Flask('tiger_catalog')
 app.config.from_pyfile('tiger.cfg')
+app.register_blueprint(mongo_datastore)
 app.register_blueprint(patron)
 app.register_blueprint(solr_search)
+
 
 solr.init_app(app)
 login_manager.init_app(app)
@@ -51,11 +54,11 @@ def cover_art(cover_id):
         mimetype = 'image/jpg'
     else:
         mimetype = 'image/png'
-    raw_image = get_cover_art_image(mongo_storage.bibframe,
-                                    entity_id)
+    raw_image = get_cover_art_image(entity_id,
+                                    mongo_storage.bibframe)
     if not raw_image:
         abort(404)
-    return Request(raw_image, mimetype=mimetype)
+    return Response(raw_image, mimetype=mimetype)
 
 @app.route("/Work/<work_id>")
 def work(work_id):
@@ -64,7 +67,15 @@ def work(work_id):
                       app.config["MONGODB_DATABASE"])
     creative_work = marc_db.marc_records.find_one(
         {"_id": ObjectId(work_id)})
+    if check_for_cover_art(work_id):
+        cover_art_url = url_for('cover_art',
+                                cover_id=work_id)
+    else:
+        cover_art_url =  url_for('solr_search.static',
+                                 filename='img/no-cover.png')
     return render_template('detail.html',
+                           cover_art_url=cover_art_url,
+                           item=get_item_details(work_id),
                            work=creative_work,
                            search_form=BasicSearch())
 

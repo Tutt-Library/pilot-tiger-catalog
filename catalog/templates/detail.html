@@ -12,15 +12,44 @@
 {% endblock %} 
 
 {% block body %}
+<div id="work-pane">
 <div class="row">
+  <div class="col-md-10">
+   <h1>Title</h1>
+  </div>
+  <div class="col-md-2">
+   <div class="btn-group">
+     <a href="#" 
+        class="btn btn-sm btn-default dropdown-toggle"
+        data-toggle="dropdown">
+        View <span class="caret"></span></a>
+     <ul class="dropdown-menu" role="menu">
+       <li><a href="#" data-bind="click: showMARC">MARC</a></li>
+       <li><a href="#">Schema.org</a></li>
+       <li><a href="#">BIBFRAME</a></li>
+     </ul>
+   </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-2">
+    <img src="{{ cover_art_url }}" class="img-responsive img-thumbnail">
+  </div>
   <div class="col-md-8">
    <div class="well well-sm">
-     <h2>{% if work.headline %}{{ work.headline }}{% else %}{{ work.name }}{% endif %}</h2>
+    {{ item|safe }}
+   </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-8">
+   <div class="" data-bind="visible: displayMARC">
+     <h2>MARC21 View</h2>
      <p class="lead">About this record {{ work['recordInfo'].get('recordOrigin') }}</p>
      <table class="table table-striped table-bordered">
 	   <tr> 
 	    <th>Leader</th>
-	    <td colspan="10">{{ work['leader'] }}</td>
+	    <td colspan="8">{{ work['leader'] }}</td>
 	   </tr>
 	   <tr>
 	     <th>Tag</th>
@@ -63,4 +92,18 @@
    </div>
   </div>
 </div>
+</div>
+{% endblock %}
+
+{% block more_js %}
+<script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
+<script> 
+  var loginViewModel = new LoginViewModel();
+  var searchViewModel = new SearchViewModel();
+  var workViewModel = new WorkViewModel();
+
+  ko.applyBindings(loginViewModel, $('#login-widget').get(0));
+  ko.applyBindings(searchViewModel, $('#search-widget').get(0));
+  ko.applyBindings(workViewModel, $('#work-pane').get(0));
+</script>
 {% endblock %}

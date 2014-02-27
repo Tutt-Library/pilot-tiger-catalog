@@ -233,24 +233,6 @@ function CatalogViewModel() {
 
   }
 
-  self.itemDetails = function(instance) {
-    alert("Should display instance popover for " + instance['instance_key']);
-
-  }
-
-  self.nextResultsPage = function() {
-   var current_page = parseInt(self.pageNumber());
-   self.pageNumber(current_page + 1);
-   self.runSearch();
-    
-  }
-
-  self.prevResultsPage = function() {
-   self.pageNumber(parseInt(self.pageNumber()) - 1);
-   self.runSearch();
-  }
-
-
   self.auSearch = function() {
   }
   self.childSubjectSearch = function() {
@@ -286,3 +268,35 @@ function CatalogViewModel() {
   }
 }
 
+function LoginViewModel() {
+ var self = this;
+
+ self.logging = ko.observable(false);
+ self.showLogin = function() {
+  self.logging(true);
+ }
+ 
+
+}
+
+function SearchViewModel() {
+  var self = this;
+  self.searchQuery = ko.observable();
+  self.newSearch = function() {
+   console.log("Search is " + self.searchQuery());
+  }
+}
+
+function WorkViewModel() {
+  var self = this;
+
+  self.displayMARC = ko.observable(false);
+
+  self.showMARC = function() {
+    if(self.displayMARC()===true) {
+      self.displayMARC(false);
+    } else {
+      self.displayMARC(true);
+    }
+  }
+}

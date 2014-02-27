@@ -1,53 +1,55 @@
-{# START Results row #}
-<div class="row"  >
- <div class="col-md-3" data-bind="visible: showFilters">
-   <br>
-   {% include 'snippets/filter-panel.html' %}
- </div>
- <div class="col-md-1 result-nav" data-bind="visible: showResults">
-   <button class="btn btn-lg"
-           data-bind="click: prevResultsPage, enable: activePrevious"><span class="glyphicon glyphicon-chevron-left"></span></button>
- </div>
- {# START Results Size DIV #}
- <div data-bind="attr: { class: resultPaneSize }">
-   <span data-bind="text: pageNumber, visible: false" id="pageNumber"></span>
-   <ul class="list-inline" data-bind="foreach: searchResults" >
-     <li> 
-      <h3  style="width: 150px">
-       <span data-bind="text: title"></span>
-       <sup>
-       <a data-bind="attr: { href: workURL }">
-       <span style="font-size: .75em" 
-             class="glyphicon glyphicon-info-sign"></span></a>
-       </sup>
-      </h3>
-      {# <p data-bind="html: authors"></p> #}
-      <p style="text-align: center">
-      <img data-bind="attr: { src: coverURL }" class="img-rounded img-result"> 
-      </p>
-      <div class="btn-group-vertical">
-        <button class="btn btn-reserve"
+<div class="col-md-1" data-bind="visible: showResults ">
+  <a class="btn btn-default btn-lg result-slide-btn" href="#"
+     data-bind="click: previousPage, style: isPreviousPage">
+   <span class="glyphicon glyphicon-chevron-left"></span>
+  </a>
+
+</div>
+<div class="col-md-10" data-bind="visible: showResults">
+   <div class="row" >
+    <span data-bind="foreach: searchResults" >
+    <div class="col-sm-4 col-md-3 result-div">
+      {# START thumbnail #}
+      <div class="thumbnail">
+        <img data-bind="attr: { src: coverURL }" class="img">
+        {# START caption #}
+        <div class="caption">
+          <h3><span data-bind="text: title"></span><sup>
+           <a data-bind="attr: { href: workURL }">
+           <span style="font-size: .75em" 
+               class="glyphicon glyphicon-info-sign"></span></a>
+          </sup>
+          </h3>
+         <p data-bind="foreach: author" style="width: 175px"> 
+          <span data-bind="text: $data"></span>
+         </p>
+         {# START action btn group #}
+         <div class="btn-group-vertical">
+          <button class="btn btn-reserve disabled"
              >Reserve now</button>
-        <button class="btn btn-find instance-action"
+          <button class="btn btn-find instance-action"
                 data-toggle="popover"
                 data-container="body"
                 data-title="Find it here" 
                 data-bind="attr: { 'data-content': instanceLocation }">Find in Library</button>
-                                   
-        <button class="btn btn-details instance-action"
+          <button class="btn btn-details instance-action"
+                data-title="Details"
                 data-toggle="popover"
+				data-container="body"
                 data-bind="attr: { 'data-content': instanceDetail }">Item Details</button>
-
-
+         {# END action btn group #}
+         </div>
+        {# END caption #}
+        </div>
+      {# END thumbnail #} 
       </div>
-     </li>
-   </ul>
- {# END Results Size DIV #}
- </div>
- <div class="col-md-1 result-nav" data-bind="visible: showResults">
-   <button class="btn btn-lg"
-           data-bind="click: nextResultsPage, enable: activeNext"><span class="glyphicon glyphicon-chevron-right"></span></button>
- 
- </div>
-{# END Results row #}
+    </div>
+    </span>
+   </div>
+</div>
+<div class="col-md-1" data-bind="visible: showResults">
+  <a class="btn btn-default btn-lg result-slide-btn" href="#"
+              data-bind="click: nextPage, enable: isNextPage">
+   <span class="glyphicon glyphicon-chevron-right"></span>
+  </a>
 </div>
