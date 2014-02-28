@@ -11,6 +11,9 @@ function groupify(a, n) {
 function ResultItem(searchResult) {
    author = ko.observableArray(searchResult['author']);
    coverURL = ko.observable(searchResult['coverURL']);
+   displayReserveDialog = function() {
+      $('#reserve-now-dlg').modal('show');
+    } 
    instanceDetail = ko.observable(searchResult['instanceDetail']);
    instanceLocation = ko.observable(searchResult['instanceLocation']);
    show = ko.observable(searchResult['show']);
@@ -58,7 +61,6 @@ function CatalogViewModel() {
     source: self.catalogEntities.ttAdapter()
    });
 
- 
   
   self.resultPaneSize = ko.observable("col-md-8");
 

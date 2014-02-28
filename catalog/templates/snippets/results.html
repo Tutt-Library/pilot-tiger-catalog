@@ -25,7 +25,8 @@
          </p>
          {# START action btn group #}
          <div class="btn-group-vertical">
-          <button class="btn btn-reserve disabled"
+          <button class="btn btn-reserve"
+              data-bind="click: displayReserveDialog"   
              >Reserve now</button>
           <button class="btn btn-find instance-action"
                 data-toggle="popover"
@@ -53,3 +54,28 @@
    <span class="glyphicon glyphicon-chevron-right"></span>
   </a>
 </div>
+
+<div class="modal fade" id="reserve-now-dlg">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Coming Soon</h4>
+      </div>
+      <div class="modal-body">
+        <p>TIGER Catalog does not currently support reserving materials. This functionality is 
+        planned for the second or third Build-Measure-Learn iteration.
+       </p>
+       <p>
+        You can help in improving TIGER Catalog by selecting the features you would like to 
+        see. 
+       </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
