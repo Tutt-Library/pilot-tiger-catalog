@@ -6,4 +6,4 @@
 	url = git@github.com:jermnelson/solr-search-blueprint.git
 [submodule "catalog/mongo_datastore"]
 	path = catalog/mongo_datastore
-        url = git@github.com:jermnelson/mongo-semantic-datastore.git
+	url = https://github.com/jermnelson/mongo-semantic-datastore.git

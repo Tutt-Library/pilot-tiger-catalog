@@ -15,7 +15,10 @@
    </form>
   </div>
  </div>
- <div class="col-md-2 col-md-offset-5 user-log-btn" id='login-widget'>
+ <div class="col-md-5">
+   <img src="{{ url_for('static', filename='img/cc-logo.png') }}" class="pull-left hidden-xs hidden-sm"> 
+ </div>
+ <div class="col-md-2 {#col-md-offset-5#} user-log-btn" id='login-widget'>
    <a class="pull-right" data-bind="visible: !logging(), click: showLogin"
       href="#">Log in</a>
    <form data-bind="visible: logging, hasFocus: logging">
