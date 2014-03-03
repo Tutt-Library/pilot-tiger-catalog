@@ -1,9 +1,9 @@
 [submodule "catalog/patron"]
 	path = catalog/patron
-	url = http://github.com:jermnelson/library-patron-blueprint.git
+	url = https://github.com:jermnelson/library-patron-blueprint.git
 [submodule "catalog/solr_search"]
 	path = catalog/solr_search
-	url = http://github.com:jermnelson/solr-search-blueprint.git
+	url = https://github.com:jermnelson/solr-search-blueprint.git
 [submodule "catalog/mongo_datastore"]
 	path = catalog/mongo_datastore
 	url = https://github.com/jermnelson/mongo-semantic-datastore.git
