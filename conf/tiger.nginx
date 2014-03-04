@@ -22,7 +22,7 @@ server {
 
     location /doc/ {
       autoindex on;
-      root /usr/local/tiger-catalog/doc/;
+      root /usr/local/tiger-catalog/doc/_build/html/;
     }
 }
    
