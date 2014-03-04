@@ -29,7 +29,7 @@ from patron import patron, login_manager
 from solr_search import solr, solr_search
 
 app = Flask('tiger_catalog')
-app.config.from_pyfile('tiger.cfg')
+app.config.from_pyfile('catalog.cfg')
 app.register_blueprint(mongo_datastore)
 app.register_blueprint(patron)
 app.register_blueprint(solr_search)
