@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:        TIGER Catalog
+# Name:        app
 #
 # Purpose:     TIGER Catalog is the catalog for Colorado College's collections.
 #              It offers a simple web app interface to a Solr, Redis, Fedora
@@ -24,7 +24,7 @@ from flask.ext.mongokit import Connection, MongoKit
 
 from helpers.filters import get_facets
 from mongo_datastore import mongo_datastore, get_cover_art_image
-from mongo_datastore import check_for_cover_art, get_item_details
+from mongo_datastore import check_for_cover_art, get_item_details, get_work
 from patron import patron, login_manager
 from solr_search import solr, solr_search
 
@@ -42,6 +42,20 @@ mongo_storage  = Connection(app.config["MONGODB_HOST"])
 
 redis_ds = redis.StrictRedis(app.config['REDIS_HOST'],
                              app.config['REDIS_PORT'])
+
+
+@app.template_filter('get_title')
+def get_title(work_id):
+    work = get_work(mongo_storage, work_id)
+    if 'title' in work:
+        return work.get('title')
+    if 'headline' in work:
+        return work.get('headline')
+    if 'fields' in work:
+        for row in work.get('fields'):
+            if row.keys()[0] == '245':
+                return ' '.join([y.values()[0] for y in row['245']['subfields'] if ['a','b'].count(y.keys()[0])])
+    return 'No Title Found'
 
 @app.template_filter('pretty_number')
 def pretty_number(number):
