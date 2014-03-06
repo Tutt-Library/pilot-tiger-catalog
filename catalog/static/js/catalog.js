@@ -26,7 +26,7 @@ function CatalogViewModel() {
   self = this;
   self.contextHeading = ko.observable("Default Content Heading");
   self.errorMessage = ko.observable();
-  self.pageNumber = ko.observable(1);
+  self.pageNumber = ko.observable(0);
   self.activeNext = ko.observable(true);
   self.activePrevious = ko.observable(true);
   self.searchChoices = ko.observableArray([
@@ -98,10 +98,9 @@ function CatalogViewModel() {
   }
 
   self.searchResults = ko.observableArray();
-  self.searchSlides = ko.observableArray(); 
   self.shardSize = ko.observable(8);
   self.newSearch = function() {
-  self.pageNumber(1);
+  self.pageNumber(0);
   self.runSearch();
   }
 
@@ -112,8 +111,9 @@ function CatalogViewModel() {
     self.isPreviousPage(true);
     var current_start = self.resultStartSlice();
     var current_end = self.resultEndSlice();
-    var next_start = current_start+4;
-    var next_end = current_end+4;
+    var next_start = current_start+(self.shardSize() / 2);
+    var next_end = current_end+(self.shardSize() / 2);
+ 
     if(next_end >= self.resultSize()) {
       self.isNextPage(false);
       next_start = current_start;
@@ -121,11 +121,8 @@ function CatalogViewModel() {
     }
     self.resultStartSlice(next_start);
     self.resultEndSlice(next_end);
-	self.displayResultView();
-	console.log(self.resultSize() , self.searchResults().length);
-	if(self.resultSize() <= self.searchResults().length) {
-	  return;
-	}
+    self.displayResultView();
+
     var csrf_token = $('#csrf_token').val();
     var data = {
       csrfmiddlewaretoken: csrf_token,
@@ -160,6 +157,7 @@ function CatalogViewModel() {
     var current_end = self.resultEndSlice();
     var previous_start = current_start-(self.shardSize() / 2);
     var previous_end = current_end-(self.shardSize() / 2);
+
     if(previous_start < 1) {
        previous_start = 1;
        previous_end = self.shardSize();
@@ -182,6 +180,8 @@ function CatalogViewModel() {
   self.runSearch = function() {
     self.showError(false);
     self.searchResults.removeAll();
+    self.resultStartSlice(1);
+    self.resultEndSlice(4);
     var csrf_token = $('#csrf_token').val();
     var data = {
       csrfmiddlewaretoken: csrf_token,
@@ -199,6 +199,9 @@ function CatalogViewModel() {
             }
             self.searchResults.removeAll(); 
             self.resultSize(self.prettyNumber(server_response["total"]));
+  //          if(server_response['total'] <= self.resultEndSlice()) {
+  //              self.resultEndSlice(server_response['total']);
+  //          }
             self.pageNumber(server_response['page']); 
             if(server_response["instances"].length > 0) {
                self.showResults(true);
@@ -208,7 +211,7 @@ function CatalogViewModel() {
                  self.searchResults.push(new ResultItem(instance));
                }
               $(".instance-action").popover({ html: true });
-			  self.displayResultView();
+         	  self.displayResultView();
              } else {
               self.showError(true);
               self.errorMessage("Your search " + '"' + self.searchQuery() + '"' + " Returned 0 Works");
