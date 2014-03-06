@@ -1,0 +1,116 @@
+<div class="modal fade" id="login-feedback-dlg">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Authentication Login Options</h4>
+      </div>
+      <div class="modal-body">
+       <div class="row">
+        <div class="col-md-6">
+        <blockquote>
+         You can improve your TIGER catalog
+         by helping us prioritize functionality for the next lean
+         Build-Measure-Learn development iteration. 
+        </blockquote>
+        </div>
+        <div class="col-md-6">
+        <p class="lead">
+         Please select all account authentication login sources you would like to use:
+        </p>
+        </div>
+      </div>
+      <hr>
+      <form class="form">
+      <div class="row">
+        <div class="col-md-6">
+         <img src="http://ccgoldcardplus.ugrydnetwork.com/images/sticker.jpg" style="width: 250px">
+        </div>
+        <div class="col-md-6">
+         <div class="checkbox">
+          <label>
+           <input type="checkbox" 
+                  value="cc-email"
+                  data-bind="checked: CCEmail">Colorado College network/email (Sam.Student@coloradocollege.edu)
+          </label>
+         </div>
+        <div class="checkbox">
+         <label>
+          <input type="checkbox" 
+                 value="cc-gold-card"
+                 data-bind="checked: CCGoldCard">Gold Card ID
+         </label>
+        </div>
+        <div class="checkbox">
+         <label>
+          <input type="checkbox" 
+                 value="cc-tiger"
+                 data-bind="checked: CCTigerNumber">Gold Card TIGER number
+         </label>
+        </div>
+       </div>
+     </div>
+    <hr>
+    {# START Facebook and Gmail login row #}
+     <div class="row">
+      <div class="col-md-6">
+       <div class="checkbox">
+        <label>
+         <input type="checkbox" 
+                data-bind="checked: facebook">
+         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Facebook.svg/200px-Facebook.svg.png" alt="Facebook" style="width: 200px">
+        </label>
+       </div>
+      </div>
+      <div class="col-md-6">
+       <div class="checkbox">
+        <label>
+         <input type="checkbox" data-bind="checked: gmail">
+         <img src="http://upload.wikimedia.org/wikipedia/en/0/0a/Gmail_logo.png" style="width: 200px" alt="Gmail"> 
+        </label>
+       </div>
+      </div>
+    {# END Facebook and Gmail login row #}
+    </div>
+    {# START Twitter and MS #}
+    <div class="row">
+     <div class="col-md-6">
+      <div class="checkbox">
+       <label>
+        <input type="checkbox" data-bind="checked: twitter">
+        <img src="https://g.twimg.com/Twitter_logo_blue.png" style="width: 75px" alt="Twitter" title="Twitter"> 
+       </label>
+      </div>
+     </div>
+     <div class="col-md-6">
+      <div class="checkbox">
+       <label>
+        <input type="checkbox" data-bind="checked: microsoft">
+        <img src="http://www.microsoft.com/global/en-us/news/publishingimages/logos/MSFT_logo_Web.jpg" 
+             alt="Microsoft" 
+             title="Microsoft"style="width: 200px">  
+       </label>
+      </div>
+     </div>
+    {# END Twitter and MS #}
+    </div>
+    <div class="row">
+      <div class="col-md-10">
+        <div class="form-group">
+         <label for="other-accounts">Other Authentication sources?</label>
+         <input type="text" class="form-control" id="other-accounts" 
+                data-bind="value: otherAuthentication" placeholder="LinkedIn, Amazon, etc."></input>
+
+        </div>
+      </div>
+
+    </div>
+     </form> 
+     </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-bind="click: sendFeedback">Send to developer</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

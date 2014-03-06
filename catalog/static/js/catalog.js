@@ -24,6 +24,7 @@ function ResultItem(searchResult) {
 
 function CatalogViewModel() {
   self = this;
+//  self.loginFeedback = new AuthenticationFeedbackViewModel();
   self.contextHeading = ko.observable("Default Content Heading");
   self.errorMessage = ko.observable();
   self.pageNumber = ko.observable(0);
@@ -61,7 +62,11 @@ function CatalogViewModel() {
     source: self.catalogEntities.ttAdapter()
    });
 
-  
+  self.showLoginFeedbackDlg = function() {
+    console.log("Why no dlg?");
+    $('#login-feedback-dlg').modal('show');
+  }  
+
   self.resultPaneSize = ko.observable("col-md-8");
 
   self.resultStartSlice = ko.observable(1);

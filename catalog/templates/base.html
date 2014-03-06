@@ -51,10 +51,11 @@
   {# END footer DIV #}
   </div> 
  {% endblock %} 
-    {% block dialogs %}
+ {% block dialogs %}
     {% include 'snippets/about.html' %}
     {% include 'snippets/help.html' %}
     {% include 'snippets/feedback.html' %}
+    {% include 'snippets/login-feedback.html' %}
  {% endblock %} 
  {% block more_dialogs %}{% endblock %}  
     <!-- Bootstrap core JavaScript
@@ -64,8 +65,11 @@
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/knockout.js') }}"></script>
     <script src="{{ url_for('static', filename='js/typeahead.bundle.min.js') }}"></script>
-
-
+    <script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+    <script>
+//     var loginFeedback = new AuthenticationFeedbackViewModel();
+//     ko.applyBindings(loginFeedback, $('login-feedback-dlg').get(0));
+    </script>    
    {% block more_js %}{% endblock %} 
   </body>
 </html>
