@@ -52,10 +52,16 @@
 <script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
 <script>
   $(function () { $('#facetTree').jstree(); });
- 
-  ko.applyBindings(new CatalogViewModel());
+
+  var catalogViewModel = new CatalogViewModel();
+  var searchViewModel = new SearchViewModel(catalogViewModel);
+  var authFeedbackViewModel = new AuthenticationFeedbackViewModel();
+
+  ko.applyBindings(catalogViewModel , $('#results-view').get(0));
+  ko.applyBindings(searchViewModel, $('#search-widget').get(0));   
+  ko.applyBindings(authFeedbackViewModel, $('#login-feedback-dlg').get(0));
+  ko.applyBindings(new AuthenticationViewModel(), $('#login-widget').get(0));
    
-    
 </script>
 {% endblock %}
 

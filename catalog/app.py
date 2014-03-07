@@ -15,6 +15,7 @@
 #-------------------------------------------------------------------------------
 import os
 import redis
+import time
 
 from bson import ObjectId
 from solr_search.forms import BasicSearch
@@ -23,16 +24,19 @@ from flask import Response, url_for
 from flask.ext.mongokit import Connection, MongoKit
 
 from helpers.filters import get_facets
+from helpers import metrics
 from mongo_datastore import mongo_datastore, get_cover_art_image
 from mongo_datastore import check_for_cover_art, get_item_details, get_work
 from patron import patron, login_manager
 from solr_search import solr, solr_search
+
 
 app = Flask('tiger_catalog')
 app.config.from_pyfile('catalog.cfg')
 app.register_blueprint(mongo_datastore)
 app.register_blueprint(patron)
 app.register_blueprint(solr_search)
+
 
 
 solr.init_app(app)
@@ -61,6 +65,45 @@ def get_title(work_id):
 def pretty_number(number):
     return "{:,}".format(number)
 
+# This should be a new Extension, very manual right now but needs to be more
+# flexible data collection for other cohort testing
+@app.route("/feedback", methods=['GET', 'POST'])
+def feedback():
+    output = {'response': None}
+    if request.method == 'POST':
+        job = request.values.get('job')
+        if job == 'auth_opts_test':
+            patron_ip = request.remote_addr
+            patron_ip_key = redis_ds.hget("auth-options-ip",
+                                          patron_ip)
+            timestamp = time.time()
+
+            if not patron_ip_key:
+                patron_ip_count = redis_ds.incr("global patron_ip")
+                patron_ip_key = "patron_ip:{}".format(patron_ip_count)
+                redis_ds.hset("auth-options-ip",
+                              patron_ip,
+                              patron_ip_key)
+                redis_ds.hset(patron_ip_key, 'ip-addr', patron_ip)
+            else:
+                patron_ip_count = patron_ip_key.split(":")[-1]
+            redis_ds.zadd("auth-options-log", timestamp, patron_ip_key)
+            for name, value in request.values.iteritems():
+                if name == 'job':
+                    continue
+                if value is not None:
+                    redis_ds.setbit("auth-options-{}".format(name),
+                                    patron_ip_count,
+                                    1)
+                    if name == 'other':
+                        redis_ds.hset(patron_ip_key,
+                                  'other-auth-option',
+                                  value)
+            output = {'response': 'ok',
+                      'msg': 'Thanks for helping us out!',
+                      'ip_key': patron_ip_key}
+    return jsonify(output)
+
 @app.route('/CoverArt/<cover_id>')
 def cover_art(cover_id):
     entity_id, ext = os.path.splitext(cover_id)
@@ -73,6 +116,10 @@ def cover_art(cover_id):
     if not raw_image:
         abort(404)
     return Response(raw_image, mimetype=mimetype)
+
+@app.route("/Work/<work_id>.json")
+def work2json(work_id):
+    return jsonify({'@id': work_id})
 
 @app.route("/Work/<work_id>")
 def work(work_id):

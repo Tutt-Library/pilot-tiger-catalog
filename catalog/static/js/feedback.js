@@ -12,6 +12,7 @@ function AuthenticationFeedbackViewModel() {
 
   self.sendFeedback = function() {
    var data = {
+     job: 'auth_opts_test',
      ccemail: self.CCEmail(),
      ccgoldcard: self.CCGoldCard(),
      facebook: self.facebook(),
@@ -20,10 +21,14 @@ function AuthenticationFeedbackViewModel() {
      twitter: self.twitter(),
      other: self.otherAuthentication()
    }
-   for(i in data) {
-     var item = data[i];
-     console.log("Data is " + item);
-   }
+   $.post('/feedback',
+           data,
+           function(server_response) {
+             if(server_response['response'] === 'ok') {
+               alert(server_response['msg']);
+             }
+           });
+   $('#login-feedback-dlg').modal('hide');
   }
 
 }

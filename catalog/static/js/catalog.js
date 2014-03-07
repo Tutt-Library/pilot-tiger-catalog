@@ -24,7 +24,6 @@ function ResultItem(searchResult) {
 
 function CatalogViewModel() {
   self = this;
-//  self.loginFeedback = new AuthenticationFeedbackViewModel();
   self.contextHeading = ko.observable("Default Content Heading");
   self.errorMessage = ko.observable();
   self.pageNumber = ko.observable(0);
@@ -50,8 +49,6 @@ function CatalogViewModel() {
    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
    queryTokenizer: Bloodhound.tokenizers.whitespace,
    remote: 'suggest?q=%QUERY',
-//   filter: function(response) { alert("Results are " + response['results']);
-//                                return $.map(response['results'], function(row) { return row['value']; }); },
    prefetch: 'suggest?prefetch=alpha'
   });
 
@@ -62,11 +59,7 @@ function CatalogViewModel() {
     source: self.catalogEntities.ttAdapter()
    });
 
-  self.showLoginFeedbackDlg = function() {
-    console.log("Why no dlg?");
-    $('#login-feedback-dlg').modal('show');
-  }  
-
+  
   self.resultPaneSize = ko.observable("col-md-8");
 
   self.resultStartSlice = ko.observable(1);
@@ -81,17 +74,6 @@ function CatalogViewModel() {
  
 
   // Handlers for Search
-
-  self.displayResultView = function() {
-	$.map($('.result-div'), function(n ,i) {
-	  if(!self.inViewPoint(parseInt(i))) {
-	    $(n).css('display', 'none');
-	  } else {
-	    $(n).css('display', 'block');
-	  }
-	});
- }
-  
   self.inViewPoint = function(index) {
     var index1 = parseInt(index) + 1;
     if(index1 <= self.resultEndSlice()) { 
@@ -102,12 +84,20 @@ function CatalogViewModel() {
     return false;  
   }
 
+
+  self.displayResultView = function() {
+    $.map($('.result-div'), function(n ,i) {
+      if(!self.inViewPoint(parseInt(i))) {
+       $(n).css('display', 'none');
+      } else {
+        $(n).css('display', 'block');
+    }
+   });
+  }
+  
   self.searchResults = ko.observableArray();
   self.shardSize = ko.observable(8);
-  self.newSearch = function() {
   self.pageNumber(0);
-  self.runSearch();
-  }
 
   self.isPreviousPage = ko.observable(false);
   self.isNextPage = ko.observable(true);
@@ -153,9 +143,6 @@ function CatalogViewModel() {
          });
   }
 
-  self.logging = ko.observable(false);
-  self.showLogin = function() { self.logging(true) }
-
   self.previousPage = function() {
     self.isNextPage(true);
     var current_start = self.resultStartSlice();
@@ -182,19 +169,15 @@ function CatalogViewModel() {
     return x;
   }
 
-  self.runSearch = function() {
+
+  self.runSearch = function(context, data) {
+    self = context;
+    self.searchQuery(data['q']);
     self.showError(false);
     self.searchResults.removeAll();
     self.resultStartSlice(1);
     self.resultEndSlice(4);
-    var csrf_token = $('#csrf_token').val();
-    var data = {
-      csrfmiddlewaretoken: csrf_token,
-//      q_type: self.searchType(),
-      q: self.searchQuery(),
-      page: self.pageNumber()
-    }
-    $.post('/search', 
+    $.post('/search',
            data,
            function(server_response) {
             if(server_response['result'] == 'error'){
@@ -202,12 +185,12 @@ function CatalogViewModel() {
              self.errorMessage("Error with search: " + server_response['text']);
              return;
             }
-            self.searchResults.removeAll(); 
+            self.searchResults.removeAll();
             self.resultSize(self.prettyNumber(server_response["total"]));
-  //          if(server_response['total'] <= self.resultEndSlice()) {
-  //              self.resultEndSlice(server_response['total']);
-  //          }
-            self.pageNumber(server_response['page']); 
+  // if(server_response['total'] <= self.resultEndSlice()) {
+  // self.resultEndSlice(server_response['total']);
+  // }
+            self.pageNumber(server_response['page']);
             if(server_response["instances"].length > 0) {
                self.showResults(true);
                var instances = server_response['instances'];
@@ -216,7 +199,7 @@ function CatalogViewModel() {
                  self.searchResults.push(new ResultItem(instance));
                }
               $(".instance-action").popover({ html: true });
-         	  self.displayResultView();
+          self.displayResultView();
              } else {
               self.showError(true);
               self.errorMessage("Your search " + '"' + self.searchQuery() + '"' + " Returned 0 Works");
@@ -224,64 +207,15 @@ function CatalogViewModel() {
         });
 
   }
+  
 
-  // Handlers for Results
-  self.displayFilters = function() {
-   if(self.showFilters() == true) {
-     self.showFilters(true);
-   } else {
-     self.showFilters(false);
-   }
-
-  }
-
-  self.findInLibrary = function(instance) {
-    var info = "<p>" + instance['title'] + " is located at " + instance['instanceLocation'] + "</p>";
-    $('#' + instance['instance_key']).popover({content: info, html: true}); 
-    $('#' + instance['instance_key']).popover('show');
-    alert("Item title is " + instance['title']);
-
-  }
-
-  self.auSearch = function() {
-  }
-  self.childSubjectSearch = function() {
-  }
-  self.dwSearch = function() {
-  }
-  self.govSearch = function() {
-  }
-  self.isSearch = function() {
-  }
-  self.jtSearch = function() {
-
-  }
-  self.kwSearch = function() {
-  }
-  self.lcSearch = function() {
-
-  }
-  self.lccnSearch = function() {
-
-  }
-  self.medSearch = function() {
-
-  }
-  self.medcSearch = function() {
-
-  }
-  self.oclcSearch = function() {
-
-  }
-  self.tSearch = function() {
-
-  }
 }
 
 function LoginViewModel() {
  var self = this;
 
  self.logging = ko.observable(false);
+
  self.showLogin = function() {
   self.logging(true);
  }
@@ -289,12 +223,29 @@ function LoginViewModel() {
 
 }
 
-function SearchViewModel() {
+function SearchViewModel(resultsViewModel) {
   var self = this;
   self.searchQuery = ko.observable();
+  self.resultsVM = resultsViewModel;
+
   self.newSearch = function() {
-   console.log("Search is " + self.searchQuery());
+   var csrf_token = $('#csrf_token').val();
+   var data = {
+     csrfmiddlewaretoken: csrf_token,
+     q: self.searchQuery(),
+     page: self.resultsVM.pageNumber()
+   }
+   self.resultsVM.runSearch(self.resultsVM, data);
   }
+}
+
+function AuthenticationViewModel() {
+  var self = this;
+
+  self.loginAction = function() {
+   $('#login-feedback-dlg').modal('show');
+  }
+
 }
 
 function WorkViewModel() {
