@@ -216,6 +216,10 @@ function LoginViewModel() {
 
  self.logging = ko.observable(false);
 
+ self.loginAction = function() {
+  console.log("In loginAction");
+ }
+
  self.showLogin = function() {
   self.logging(true);
  }
