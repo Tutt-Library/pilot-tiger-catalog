@@ -9,14 +9,17 @@
 # Copyright:   (c) Jeremy Nelson, Colorado College 2014
 # Licence:     GPL2
 #-------------------------------------------------------------------------------
+import datetime
 import re
 import xml.etree.ElementTree as etree
 
+from catalog.mongo_datastore import generate_record_info
 from catalog.mongo_datastore.ingesters import mods2ds
+from catalog.solr_search import index_mods
 from copy import deepcopy
 from flask_fedora_commons.lib.util import RequestFailed
 from gridfs import GridFS
-
+import flask_bibframe.models as bf_models
 
 RECORD_CONSTANTS = {'source': u'CoCCC',
                     'msg': u'From Colorado College MODS record'}
@@ -124,61 +127,70 @@ def insert_mods(mods_xml, client):
     if genre is None:
         # Try genre subject
         genre = mods.find("{{{0}}}subject/{{{0}}}genre".format(mods2ds.MODS_NS))
-    if ['audio recording',
-        'personal narratives'].count(genre.text.lower()) > 0:
-        return add_oral_history(mods, db)
-    if ['newspaper', 'periodical'].count(genre.text.lower()) > 0:
-        return add_publication(mods, db)
-    if genre.text.lower().startswith('history'):
-        return mods2ds.get_or_add_article(mods, db, RECORD_CONSTANTS)
-    if genre.text.lower().startswith('photo'):
-        return mods2ds.get_or_add_photograph(mods, db, RECORD_CONSTANTS)
-    if genre.text.lower().startswith('pict'):
-        return mods2ds.get_or_add_photograph(mods, db, RECORD_CONSTANTS)
-    if genre.text.lower().startswith('thes'):
-        return add_thesis(mods, db, RECORD_CONSTANTS)
-    if genre.text.lower().startswith('videorecord'):
-        return mods2ds.get_or_add_video(mods, db, RECORD_CONSTANTS)
+    if genre is not None and genre.text is not None:
+        if ['audio recording',
+            'personal narratives'].count(genre.text.lower()) > 0:
+            return add_oral_history(mods, client)
+        if ['newspaper', 'periodical'].count(genre.text.lower()) > 0:
+            return add_publication(mods, db)
+        if genre.text.lower().startswith('history'):
+            return mods2ds.get_or_add_article(mods, client, RECORD_CONSTANTS)
+        if genre.text.lower().startswith('photo'):
+            return mods2ds.get_or_add_photograph(mods, client, RECORD_CONSTANTS)
+        if genre.text.lower().startswith('pict'):
+            return mods2ds.get_or_add_photograph(mods, client, RECORD_CONSTANTS)
+        if genre.text.lower().startswith('thes'):
+            return mods2ds.add_thesis(mods, client, RECORD_CONSTANTS)
+        if genre.text.lower().startswith('videorecord'):
+            return mods2ds.get_or_add_video(mods, client, RECORD_CONSTANTS)
     # Next try using type_of_resource value to guess type
     type_of_resource = mods.find(
         "{{{0}}}typeOfResource".format(mods2ds.MODS_NS))
-    if type_of_resource.text.startswith('sound'):
-        return mods2ds.get_or_add_audio(mods, client, RECORD_CONSTANTS)
-    if type_of_resource.text.startswith('still image'):
-        return get_or_add_photograph(mods, db, RECORD_CONSTANTS)
-    if type_of_resource.text.startswith("text"):
-        series = mods.find(
-            "{{{0}}}relatedItem[@type='series']/{{{0}}}titleInfo/{{{0}}}title".format(
-            ccmods2ds.mods2ds.MODS_NS))
-        if series is not None:
-            series_id = add_series(series, client, RECORD_CONSTANTS)
-            article_id = mods2ds.get_or_add_article(mods, db, RECORD_CONSTANTS)
-            db.schema_org.update(
-                {"_id": article_id},
-                {"$set": {"isPartOf": str(series_id)}})
-            return ariticle_id
+    if type_of_resource is not None and type_of_resource.text is not None:
+        if type_of_resource.text.startswith('sound'):
+            return mods2ds.get_or_add_audio(mods, client, RECORD_CONSTANTS)
+        if type_of_resource.text.startswith('still image'):
+            return mods2ds.get_or_add_photograph(mods, client, RECORD_CONSTANTS)
+        if type_of_resource.text.startswith("text"):
+            series = mods.find(
+                "{{{0}}}relatedItem[@type='series']/{{{0}}}titleInfo/{{{0}}}title".format(
+                ccmods2ds.mods2ds.MODS_NS))
+            if series is not None:
+                series_id = add_series(series, client, RECORD_CONSTANTS)
+                article_id = mods2ds.get_or_add_article(mods, client, RECORD_CONSTANTS)
+                client.schema_org.update(
+                    {"_id": article_id},
+                    {"$set": {"isPartOf": str(series_id)}})
+                return ariticle_id
+    # No matches, create a generic CreativeWork
+    work = CreativeWork(**mods2ds.add_base(mods, client, RECORD_CONSTANTS))
+    work_id = client.schema_org.ingest(work.as_dict())
+    return work_id
 
-def process_pid(pid, client, repo):
+
+
+def process_pid(pid, client, repository, solr_connection):
     """Takes a PID, queries Fedora Commons repository and adds to MongoDB
     bibframe database.
 
     Args:
         pid: String of pid
         client: Flask-MongoKit Client
-        repo: Fedora Commons repository
+        repository: Fedora Commons repository
+        solr_connection: Solr connection
 
     Returns:
         primary_key: MongoDB id for pid
     """
     bibframe = client.bibframe
     schema_org = client.schema_org
-    mods = etree.XML(repo.api.getDatastreamDissemination(pid, 'MODS')[0])
+    raw_mods = repository.api.getDatastreamDissemination(pid, 'MODS')[0]
     try:
-        raw_thumbnail = repo.api.getDatastreamDissemination(pid, 'TN')[0]
+        raw_thumbnail = repository.api.getDatastreamDissemination(pid, 'TN')[0]
     except RequestFailed:
         raw_thumbnail = None
     cover_art_grid = GridFS(bibframe)
-    mongo_id = insert_mods(mods, client)
+    mongo_id = insert_mods(raw_mods, client)
     if raw_thumbnail is not None:
         image_id = cover_art_grid.put(raw_thumbnail)
         cover_art = bf_models.CoverArt(
@@ -191,6 +203,8 @@ def process_pid(pid, client, repo):
                 generate_record_info(
                     RECORD_CONSTANTS.get('source'),
                     RECORD_CONSTANTS.get('msg')))
+    schema_record = schema_org.CreativeWork.find_one({"_id": mongo_id})
+    index_mods(solr_connection, schema_record, raw_mods)
     return mongo_id
 
 
