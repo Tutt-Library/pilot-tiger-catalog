@@ -2,6 +2,7 @@
 # Tutt library III location codes
 #
 FULL_CODE_MAP = {
+    'dacc': 'DigitalCC',
     'ewww':'Online',
     'ewwwd':'Online Government Documents',
     'ewwwp':'Online Periodcals',

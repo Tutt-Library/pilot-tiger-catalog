@@ -18,11 +18,13 @@ from catalog.mongo_datastore.ingesters import mods2ds
 from catalog.solr_search import index_mods
 from copy import deepcopy
 from flask_fedora_commons.lib.util import RequestFailed
+from flask_schema_org.models import CreativeWork
 from gridfs import GridFS
 import flask_bibframe.models as bf_models
 
 RECORD_CONSTANTS = {'source': u'CoCCC',
-                    'msg': u'From Colorado College MODS record'}
+                    'msg': u'From Colorado College MODS record',
+                    'location': 'dacc'}
 
 def add_podcast(mods, client):
     schema_org = client.schema_org
@@ -35,6 +37,7 @@ def add_oral_history(mods, client):
     schema_org = client.schema_org
     bibframe = client.bibframe
     base_mods = mods2ds.add_base(mods, client, RECORD_CONSTANTS)
+
 
 
 PUB_INFO_VOL_RE = re.compile(r"v. (\w*)")
@@ -129,20 +132,23 @@ def insert_mods(mods_xml, client):
         genre = mods.find("{{{0}}}subject/{{{0}}}genre".format(mods2ds.MODS_NS))
     if genre is not None and genre.text is not None:
         if ['audio recording',
+            'interview',
             'personal narratives'].count(genre.text.lower()) > 0:
-            return add_oral_history(mods, client)
+            return mods2ds.get_or_add_audio(mods, client, RECORD_CONSTANTS)
         if ['newspaper', 'periodical'].count(genre.text.lower()) > 0:
-            return add_publication(mods, db)
+            return mods2ds.get_or_add_periodical(mods, client, RECORD_CONSTANTS)
         if genre.text.lower().startswith('history'):
             return mods2ds.get_or_add_article(mods, client, RECORD_CONSTANTS)
         if genre.text.lower().startswith('photo'):
             return mods2ds.get_or_add_photograph(mods, client, RECORD_CONSTANTS)
         if genre.text.lower().startswith('pict'):
             return mods2ds.get_or_add_photograph(mods, client, RECORD_CONSTANTS)
-        if genre.text.lower().startswith('thes'):
+        if genre.text.lower().startswith('thes') or \
+        genre.text.lower().startswith('essay'):
             return mods2ds.add_thesis(mods, client, RECORD_CONSTANTS)
         if genre.text.lower().startswith('videorecord'):
             return mods2ds.get_or_add_video(mods, client, RECORD_CONSTANTS)
+
     # Next try using type_of_resource value to guess type
     type_of_resource = mods.find(
         "{{{0}}}typeOfResource".format(mods2ds.MODS_NS))
@@ -154,17 +160,17 @@ def insert_mods(mods_xml, client):
         if type_of_resource.text.startswith("text"):
             series = mods.find(
                 "{{{0}}}relatedItem[@type='series']/{{{0}}}titleInfo/{{{0}}}title".format(
-                ccmods2ds.mods2ds.MODS_NS))
-            if series is not None:
-                series_id = add_series(series, client, RECORD_CONSTANTS)
+                mods2ds.MODS_NS))
+            if series is not None and series.text is not None:
+                series_id = add_series(series, client)
                 article_id = mods2ds.get_or_add_article(mods, client, RECORD_CONSTANTS)
-                client.schema_org.update(
+                client.schema_org.CreativeWork.update(
                     {"_id": article_id},
                     {"$set": {"isPartOf": str(series_id)}})
-                return ariticle_id
+                return article_id
     # No matches, create a generic CreativeWork
     work = CreativeWork(**mods2ds.add_base(mods, client, RECORD_CONSTANTS))
-    work_id = client.schema_org.ingest(work.as_dict())
+    work_id = client.schema_org.CreativeWork.insert(work.as_dict())
     return work_id
 
 
@@ -198,11 +204,7 @@ def process_pid(pid, client, repository, solr_connection):
             annotationSource='http://dacc.coalliance.org/fedora/{}'.format(pid),
             assertionDate=datetime.datetime.utcnow().isoformat(),
             coverArtThumb=image_id)
-        setattr(cover_art,
-                'recordInfo',
-                generate_record_info(
-                    RECORD_CONSTANTS.get('source'),
-                    RECORD_CONSTANTS.get('msg')))
+        bibframe.CoverArt.insert(cover_art.as_dict())
     schema_record = schema_org.CreativeWork.find_one({"_id": mongo_id})
     index_mods(solr_connection, schema_record, raw_mods)
     return mongo_id
