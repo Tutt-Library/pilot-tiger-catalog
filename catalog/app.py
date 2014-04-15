@@ -18,7 +18,7 @@ import redis
 import time
 
 from bson import ObjectId
-from solr_search.forms import BasicSearch
+from solr_search.forms import BasicSearch, FilterResults
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import Response, url_for
 from flask.ext.mongokit import Connection, MongoKit

@@ -59,6 +59,12 @@ function CatalogViewModel() {
     source: self.catalogEntities.ttAdapter()
    });
 
+
+  self.displayFilterPanel = function() {
+   console.log("In displayFilters");
+   self.showFilters(true); 
+
+  }
   
   self.resultPaneSize = ko.observable("col-md-8");
 
@@ -66,7 +72,7 @@ function CatalogViewModel() {
   self.resultEndSlice = ko.observable(4);
   self.resultSize = ko.observable(4);
 
-  self.showFilters = ko.observable(true);
+  self.showFilters = ko.observable(false);
   self.showResults = ko.observable(false);
 
   self.searchQuery = ko.observable();
