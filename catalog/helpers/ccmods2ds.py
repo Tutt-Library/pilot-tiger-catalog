@@ -197,6 +197,12 @@ def process_pid(pid, client, repository, solr_connection):
         raw_thumbnail = None
     cover_art_grid = GridFS(bibframe)
     mongo_id = insert_mods(raw_mods, client)
+    schema_org.CreativeWork.update(
+        {"_id": mongo_id},
+        {"$set": {"identifiers": {"pid": pid}}})
+    schema_org.CreativeWork.update(
+        {"_id": mongo_id},
+        {"$set": {'availableAtOrFrom': 'dacc'}})
     if raw_thumbnail is not None:
         image_id = cover_art_grid.put(raw_thumbnail)
         cover_art = bf_models.CoverArt(
