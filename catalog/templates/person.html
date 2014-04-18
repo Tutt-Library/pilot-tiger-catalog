@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+
+{% endblock %}
+
+{% block navbar %}
+ {% include 'snippets/header.html' %}
+{% endblock %}
+
+{% block body %}
+<div class="row">
+ <div class="col-md-8">
+  <h1>{{ person.givenName }} {{ person.familyName }}</h1>
+ </div>
+ <div class="col-md-4">
+  <h3>{{ person.works|length }} Work(s)</h3>
+  <ol>
+  {% for work in person.works %}
+   <li><a href="{{ url_for('work', work_id=work['_id']) }}">{% if 'headline' in work %}{{ work.get('headline') }}{% else %}{{ work.get('name') }}{% endif %}</a></li>
+  {% endfor %}
+  </ol>
+ </div>
+</div>
+{% endblock %}

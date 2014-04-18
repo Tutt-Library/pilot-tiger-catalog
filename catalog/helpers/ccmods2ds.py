@@ -217,6 +217,17 @@ def process_pid(pid, client, repository, solr_connection):
 
 
 
+def get_active_pids(repository):
+    """Function queries Coalliance repository and extracts all active pids
+
+    Args:
+        repository - Fedora Commons Repository
+
+    Returns:
+        list - List of active PIDS
+    """
+    all_pids = []
+
 
 
 

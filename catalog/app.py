@@ -18,6 +18,8 @@ import redis
 import time
 
 from bson import ObjectId
+from bson.errors import InvalidId
+from collections import OrderedDict
 from solr_search.forms import BasicSearch, FilterResults
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import Response, url_for
@@ -49,6 +51,45 @@ redis_ds = redis.StrictRedis(catalog.config['REDIS_HOST'],
                              catalog.config['REDIS_PORT'])
 
 
+@catalog.template_filter('get_creators')
+def get_creators(work_id):
+    work = get_work(mongo_storage, work_id)
+    if 'creator' in work:
+        creators = []
+        for mongo_id in work.get('creator', []):
+            print(mongo_storage.database_names())
+            creator = mongo_storage.schema_org.Person.find_one(
+                {"_id": ObjectId(mongo_id)},
+                {"name"})
+            if creator:
+                creators.append(creator)
+        return ','.join(
+            ["""<a href="/Person/{0}">{1}</a>""".format(creator.get('_id'),
+                                                        creator.get('name')) for creator in creators])
+    if 'fields' in work:
+        for row in work.get('fields'):
+            if row.keys()[0] == '100':
+                return ' '.join([y.values()[0] for y in row['100']['subfields'] if ['a','b'].count(y.keys()[0])])
+
+
+
+
+@catalog.template_filter('get_organization')
+def get_organization(org_str):
+    # test to if org string is an object id
+    try:
+        org_id = ObjectId(org_str)
+        organization = mongo_storage.schema_org.Organization.find_one({
+        "_id": ObjectId(org_id)})
+        if organization is not None:
+            return organization.get('name')
+    except InvalidId, e:
+        return org_str
+
+
+
+
+
 @catalog.template_filter('get_title')
 def get_title(work_id):
     work = get_work(mongo_storage, work_id)
@@ -65,6 +106,39 @@ def get_title(work_id):
 @catalog.template_filter('pretty_number')
 def pretty_number(number):
     return "{:,}".format(number)
+
+@catalog.template_filter('show_schema')
+def show_schema(entity):
+    if '@type' in entity:
+        # Is native schema.org in datastore
+        if [u'AudioObject', u'Photograph', u'VideoObject',
+            u'Periodical', u'Article', u'CreativeWork'].count(
+            entity['@type']) > -1:
+            work = OrderedDict()
+            for key in sorted(entity.keys()):
+                if key.startswith('@'):
+                    continue
+
+                if ['contributor', 'copyrightHolder', 'creator'].count(key) > 0:
+                    mongo_id = entity['_id']
+                    named_entity = mongo_storage.schema_org.Person.find_one(
+                        {"_id": ObjectId(mongo_id)})
+                    if named_entity is None:
+                        named_entity = mongo_storage.schema_org.Organization.find_one(
+                        {"_id": ObjectId(mongo_id)})
+                    if named_entity is not None:
+                        work[key] = named_entity.name
+                    else:
+                        work[key] = mongo_id
+                else:
+                    work[key] = entity[key]
+
+
+
+
+
+
+
 
 # This should be a new Extension, very manual right now but needs to be more
 # flexible data collection for other cohort testing
@@ -159,6 +233,41 @@ def work_content(work_id, ext='html'):
         return "<rdf><title>{}</title></rdf>".format(work_id)
 
 
+def person_content(person_id, ext='html'):
+    marc_db = getattr(mongo_storage,
+                      catalog.config["MONGODB_DATABASE"])
+    bibframe_db = mongo_storage.bibframe
+    schema_org_db = mongo_storage.schema_org
+    person_id = ObjectId(person_id)
+    # Try schema org
+    person = schema_org_db.Person.find_one(
+        {"_id": person_id})
+    if person is None:
+        person = bibframe_db.find_one(
+            {"_id": person_id})
+    if person is None:
+        abort(404)
+    person['works'] = []
+    for result in schema_org_db.CreativeWork.find(
+        {'creator': str(person_id)},
+        {'headline', 'name'}):
+            person['works'].append(result)
+    if ext == 'html':
+        return render_template('person.html',
+            person=person,
+            search_form=BasicSearch())
+
+
+@catalog.route("/Person/<person_id>", methods=['GET', 'POST'])
+@produces('application/json', 'application/rdf+xml', 'text/html')
+def person(person_id):
+    if 'application/json' in request.headers['Accept']:
+        return person_content(person_id, 'json')
+    elif 'application/rdf+xml' in request.headers['Accept']:
+        return person_content(person_id, 'xml')
+    else:
+        return person_content(person_id)
+
 @catalog.route("/Work/<work_id>", methods=['GET', 'POST'])
 @produces('application/json', 'application/rdf+xml', 'text/html')
 def work(work_id):
@@ -168,6 +277,9 @@ def work(work_id):
         return work_content(work_id, 'xml')
     else:
         return work_content(work_id)
+
+
+
 
 
 

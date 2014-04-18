@@ -24,7 +24,7 @@
     <span class="search-stats" >
      <span data-bind="text: resultStartSlice"></span>-<span data-bind="text: resultEndSlice"></span>/<span data-bind="text: resultSize"></span>
      &nbsp;
-    {# <a href="#" data-bind="click: displayFilterPanel" style="font-size: .75em"><span class="glyphicon glyphicon-forward"></span></a>#}
+    <a href="#" data-bind="click: displayFilterPanel" style="font-size: .75em"><span class="glyphicon glyphicon-forward"></span></a>
     </span>
    </h2>
    <h2 class="text-danger" data-bind="visible: showError, text: errorMessage"></h2>
@@ -47,9 +47,6 @@
  {% include 'snippets/footer.html' %}
 {% endblock %}
 
-{% block dialogs %}
-
-{% endblock %}
 
 {% block more_js %}
 <script src="{{ url_for('static', filename='js/jstree.min.js') }}"></script>

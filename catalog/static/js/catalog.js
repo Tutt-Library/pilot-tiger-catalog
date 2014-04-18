@@ -62,7 +62,8 @@ function CatalogViewModel() {
 
   self.displayFilterPanel = function() {
    console.log("In displayFilters");
-   self.showFilters(true); 
+   $('#filter-dialog').modal('show');
+   // self.showFilters(true); 
 
   }
   
@@ -262,12 +263,36 @@ function WorkViewModel() {
   var self = this;
 
   self.displayMARC = ko.observable(false);
+  self.displaySchemaOrg = ko.observable(false);
+
+  self.editLeader = function() {
+    for(i in this) {
+      console.log("Element is " + i);
+    }
+  }
 
   self.showMARC = function() {
+    self.displaySchemaOrg(false);
     if(self.displayMARC()===true) {
       self.displayMARC(false);
     } else {
       self.displayMARC(true);
     }
+  }
+
+  self.showSchemaOrg = function() {
+    self.displayMARC(false);
+    if(self.displaySchemaOrg()===true) {
+      self.displaySchemaOrg(false);
+    } else {
+      self.displaySchemaOrg(true);
+    }
+    console.log("In showSchemaOrg");
+  }
+
+  self.showBIBFRAME = function() {
+   self.displayMARC(false);
+   self.displaySchemaOrg(false);
+   console.log("In showBIBFRAME");
   }
 }
