@@ -83,7 +83,7 @@ def get_organization(org_str):
         "_id": ObjectId(org_id)})
         if organization is not None:
             return organization.get('name')
-    except InvalidId, e:
+    except InvalidId:
         return org_str
 
 

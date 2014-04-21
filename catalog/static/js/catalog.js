@@ -194,6 +194,9 @@ function CatalogViewModel() {
             }
             self.searchResults.removeAll();
             self.resultSize(self.prettyNumber(server_response["total"]));
+            if(server_response["total"] < 4) {
+              self.resultEndSlice(server_response["total"]);
+            }
   // if(server_response['total'] <= self.resultEndSlice()) {
   // self.resultEndSlice(server_response['total']);
   // }
