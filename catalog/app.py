@@ -54,7 +54,7 @@ redis_ds = redis.StrictRedis(catalog.config['REDIS_HOST'],
 @catalog.template_filter('get_creators')
 def get_creators(work_id):
     work = get_work(mongo_storage, work_id)
-    if 'creator' in work:
+    if 'creator' in work and work['creator'] != None:
         creators = []
         for mongo_id in work.get('creator', []):
             print(mongo_storage.database_names())
