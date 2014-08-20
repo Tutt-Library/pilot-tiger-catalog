@@ -14,8 +14,9 @@
 <div id="work-pane">
 <div class="row">
   <div class="col-md-10">
-   <h1>{{ work['_id']|get_title }}</h1>
-   <p class="lead">by {{ work['_id']|get_creators|safe }}</p>
+   <h1>{{ entity|get_heading }}</h1>
+   <p>{{ entity }}</p>
+   <p class="lead">by {{ entity['creator']|get_creators|safe }}{#{ work['_id']|get_creators|safe }#}</p>
   </div>
   <div class="col-md-2">
    <div class="btn-group">
@@ -37,10 +38,16 @@
   </div>
   <div class="col-md-6">
    <div class="well well-sm">
-    {{ item|safe }}
+    <dl>
+     {% for key, value in entity.items() %}
+      <dt>{{ key }}</dt>
+      <dd>
+        {{ value|process_value|safe }}
+      </dd>
+     {% endfor %}
+    </dl>
    </div>
    <div class="col-md-4">
-
    </div>
   </div>
 </div>
@@ -48,12 +55,12 @@
   <div class="col-md-8">
    <div class="" data-bind="visible: displayMARC">
      <h2>MARC21 View</h2>
-     <p class="lead">About this record {{ work['recordInfo'].get('recordOrigin') }}</p>
+     <p class="lead">About this record {#{ work['recordInfo'].get('recordOrigin') }#}</p>
      <table class="table table-striped table-bordered">
 	   <tr> 
 	    <th>Leader</th>
 	    <td colspan="8" data-bind="click: editLeader">
-             {{ work['leader'] }}
+             {#{ work['leader'] }#}
              </td>
 	   </tr>
 	   <tr>
@@ -61,7 +68,7 @@
 		 <th colspan="2">Indicators</th>
 		 <th colspan="10">Value or subfields</th>
 	   </tr>
-	   {% for field in work['fields'] %}
+	   {# % for field in work['fields'] %}
 	   {% set tag = field.keys()[0] %}
 	   {% if not 'subfields' in field[tag] %}
 	   <tr>
@@ -91,12 +98,12 @@
 		 {% endfor %}
 	   <tr>
 	   {% endif %}
-	   {% endfor %}
+	   {% endfor %#}
 	   
 	 </table>
    </div>
    <div class="col-md-8" data-bind="visible: displaySchemaOrg">
-     {{ work|show_schema|safe }}
+     {#{ work|show_schema|safe }}
      {% if '@type' in work and work['@type'].startswith('CreativeWork') %}
       <h2>Schema.org</h2>
       <dl class="dl-horizontal">
@@ -107,7 +114,7 @@
          {% endif %}
        {% endfor %}
       </dl>
-     {% endif %}
+     {% endif %#}
    </div>
   </div>
 </div>

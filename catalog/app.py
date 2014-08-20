@@ -13,63 +13,133 @@
 # Copyright:   (c) Jeremy Nelson, Colorado College 2014
 # Licence:     MIT
 #-------------------------------------------------------------------------------
+import json
 import os
 import redis
+import rdflib
 import time
+import urllib
+import uuid
 
 from bson import ObjectId
 from bson.errors import InvalidId
 from collections import OrderedDict
-from solr_search.forms import BasicSearch, FilterResults
+from search.forms import BasicSearch, FilterResults
+
 from flask import abort, Flask, g, jsonify, redirect, render_template, request
 from flask import Response, url_for
-from flask.ext.mongokit import Connection, MongoKit
+##from flask.ext.mongokit import Connection, MongoKit
 from flask_negotiate import produces
-from helpers.filters import get_facets
-from helpers import metrics
-from mongo_datastore import mongo_datastore, get_cover_art_image
-from mongo_datastore import check_for_cover_art, get_item_details, get_work
-from patron import patron, login_manager
+##from helpers.filters import get_facets
+##from helpers import metrics
+##from mongo_datastore import mongo_datastore, get_cover_art_image
+##from mongo_datastore import check_for_cover_art, get_item_details, get_work
+##from patron import patron, login_manager
 from rdflib import Graph
-from solr_search import solr, solr_search
 
+##from solr_search import solr, solr_search
 
-catalog = Flask('tiger_catalog')
+catalog = Flask(__name__)
+##catalog = Flask('tiger_catalog')
 catalog.config.from_pyfile('catalog.cfg')
-catalog.register_blueprint(mongo_datastore)
-catalog.register_blueprint(patron)
-catalog.register_blueprint(solr_search)
+##catalog.register_blueprint(mongo_datastore)
+##catalog.register_blueprint(patron)
+##catalog.register_blueprint(solr_search)
 
 
 
-solr.init_app(catalog)
-login_manager.init_app(catalog)
+##solr.init_app(catalog)
+##login_manager.init_app(catalog)
 
-mongo_storage  = Connection(catalog.config["MONGODB_HOST"])
+##mongo_storage  = Connection(catalog.config["MONGODB_HOST"])
 
-redis_ds = redis.StrictRedis(catalog.config['REDIS_HOST'],
-                             catalog.config['REDIS_PORT'])
+##redis_ds = redis.StrictRedis(catalog.config['REDIS_HOST'],
+##                             catalog.config['REDIS_PORT'])
+
+BF_NS = rdflib.Namespace('http://bibframe.org/vocab/')
+SCHEMA_NS = rdflib.Namespace('http://schema.org/')
+
+CONTEXT={
+    "@vocab": "http://bibframe.org/vocab/",
+##    "fcrepo": "http://fedora.info/definitions/v4/repository#",
+##    "fedora": "http://fedora.info/definitions/v4/rest-api#",
+    "@language": "en"}
+
+
+def get_entity(entity_id):
+    entity_rdf = rdflib.Graph().parse(entity_id)
+    relative_url = urllib.parse.urlsplit(entity_id).path
+    if relative_url.startswith("/rest"):
+        relative_url = relative_url.split("/rest")[-1]
+    html = """<a href="{}">{}</a>"""
+    for namespace in [
+        BF_NS,
+        SCHEMA_NS,
+        rdflib.RDFS,
+        rdflib.RDF]:
+        label = entity_rdf.value(subject=rdflib.URIRef(entity_id),
+                                  predicate=namespace.label)
+        if label is not None:
+            return html.format(
+                relative_url,
+                label)
+        title = entity_rdf.value(subject=rdflib.URIRef(entity_id),
+                                 predicate=namespace.titleValue)
+        if title is not None:
+            return html.format(
+                relative_url,
+                title)
+    return relative_url
 
 
 @catalog.template_filter('get_creators')
-def get_creators(work_id):
-    work = get_work(mongo_storage, work_id)
-    if 'creator' in work:
-        creators = []
-        for mongo_id in work.get('creator', []):
-            print(mongo_storage.database_names())
-            creator = mongo_storage.schema_org.Person.find_one(
-                {"_id": ObjectId(mongo_id)},
-                {"name"})
-            if creator:
-                creators.append(creator)
-        return ','.join(
-            ["""<a href="/Person/{0}">{1}</a>""".format(creator.get('_id'),
-                                                        creator.get('name')) for creator in creators])
-    if 'fields' in work:
-        for row in work.get('fields'):
-            if row.keys()[0] == '100':
-                return ' '.join([y.values()[0] for y in row['100']['subfields'] if ['a','b'].count(y.keys()[0])])
+def get_creators(creators):
+    output = ''
+    if type(creators) == dict and '@id' in creators:
+        return get_entity(creators.get('@id'))
+    elif type(creators) == list:
+        for creator in creators:
+            if '@id' in creator:
+                output += "{},".format(get_entity(creator.get('@id')))
+    if output.endswith(","):
+        output = output[:-1]
+    return output
+
+@catalog.template_filter('get_heading')
+def get_heading(entity):
+    if 'title' in entity:
+        if type(entity['title']) == list:
+            return entity['title'][0]
+        elif type(entity['title']) == str:
+            return entity['title']
+        else:
+            return str(entity['title'])
+    if 'name' in entity:
+        if type(entity['name']) == list:
+            return entity['name'][0]
+        else:
+            return entity['name']
+
+
+
+
+##    work = get_work(mongo_storage, work_id)
+##    if 'creator' in work:
+##        creators = []
+##        for mongo_id in work.get('creator', []):
+##            print(mongo_storage.database_names())
+##            creator = mongo_storage.schema_org.Person.find_one(
+##                {"_id": ObjectId(mongo_id)},
+##                {"name"})
+##            if creator:
+##                creators.append(creator)
+##        return ','.join(
+##            ["""<a href="/Person/{0}">{1}</a>""".format(creator.get('_id'),
+##                                                        creator.get('name')) for creator in creators])
+##    if 'fields' in work:
+##        for row in work.get('fields'):
+##            if row.keys()[0] == '100':
+##                return ' '.join([y.values()[0] for y in row['100']['subfields'] if ['a','b'].count(y.keys()[0])])
 
 
 
@@ -87,7 +157,37 @@ def get_organization(org_str):
         return org_str
 
 
-
+@catalog.template_filter('process_value')
+def process_value(value):
+    output = ''
+    if type(value) == str or type(value) == bool:
+        return value
+    if type(value) == list:
+        for val in value:
+            if '@id' in val:
+                output += "{}<br>".format(get_entity(val['@id']))
+            else:
+                output += "{}<br>".format(val)
+    if type(value) == dict:
+        if '@id' in value:
+            entity_rdf = rdflib.Graph().parse(value.get('@id'))
+##            except rdflib.plugin.PluginException:
+##                entity_rdf = rdflib.Graph()
+            relative_url = urllib.parse.urlsplit(value.get('@id')).path
+            if relative_url.startswith("/rest"):
+                relative_url = relative_url.split("/rest")[-1]
+            if value.get('@id').startswith("http://id.loc.gov"):
+                relative_url = value.get('@id')
+            for namespace in [
+                BF_NS,
+                SCHEMA_NS,
+                rdflib.RDFS]:
+                label = entity_rdf.value(
+                    subject=rdflib.URIRef(value.get('@id')),
+                    predicate=namespace.label)
+            output += """<a href="{}">{}</a><br>""".format(
+                    relative_url, label)
+    return output
 
 
 @catalog.template_filter('get_title')
@@ -192,66 +292,74 @@ def cover_art(cover_id):
         abort(404)
     return Response(raw_image, mimetype=mimetype)
 
-
-@catalog.route("/Work/<work_id>.<ext>")
-def work_content(work_id, ext='html'):
-    marc_db = getattr(mongo_storage,
-                      catalog.config["MONGODB_DATABASE"])
-    bibframe_db = mongo_storage.bibframe
-    schema_org_db = mongo_storage.schema_org
-    if check_for_cover_art(work_id):
-        cover_art_url = url_for('cover_art',
-                                cover_id=work_id)
-    else:
-        cover_art_url =  url_for('solr_search.static',
-                                 filename='img/no-cover.png')
-    work_graph = Graph()
-    # First try MARC collection in MARC database
-    creative_work = marc_db.marc_records.find_one(
-        {"_id": ObjectId(work_id)})
-    # Next try CreativeWork collection in schema_org database
-    if creative_work is None:
-        creative_work = schema_org_db.CreativeWork.find_one(
-            {"_id": ObjectId(work_id)})
-    # Finally try Work collections in bibframe database
-    if creative_work is None:
-        creative_work = bibframe_db.Work.find_one(
-            {"_id": ObjectId(work_id)})
-    # No creative work found, return 404
-    if creative_work is None:
+@catalog.route("/<entity_class>/<entity_id>")
+@catalog.route("/<entity_class>/<entity_id>.<ext>")
+@produces('application/json', 'application/rdf+xml', 'text/html')
+def entity(entity_class, entity_id, ext='html'):
+    entity_url = urllib.parse.urljoin(
+        catalog.config["FEDORA_HOST"],
+        "rest/{}/{}".format(entity_class, entity_id))
+    try:
+        entity = rdflib.Graph().parse(entity_url)
+    except urllib.error.HTTPError:
         abort(404)
+    entity_json = json.loads(entity.serialize(
+        format='json-ld',
+        context=CONTEXT).decode('utf-8'))
+    output = {}
+    if '@graph' in entity_json:
 
-    if ext == 'html':
+        for graph in entity_json['@graph']:
+            if '@type' in graph and entity_class in graph['@type']:
+                for key, value in graph.items():
+                    if not key.startswith("http://fedora") and\
+                    not key.startswith("@") and\
+                    not key.startswith("http://www.w3.org"):
+                        output[key] = value
+    else:
+        for key, value in entity_json.items():
+            if not key.startswith("http://fedora") and\
+                    not key.startswith("@") and\
+                    not key.startswith("http://www.w3.org"):
+                        output[key] = value
+    if ext.startswith('html'):
         return render_template('detail.html',
-                           cover_art_url=cover_art_url,
-                           item=get_item_details(work_id),
-                           work=creative_work,
+                           cover_art_url=None,#cover_art_url,
+                           item=None,#get_item_details(work_id),
+                           entity=output,
                            search_form=BasicSearch())
-    elif ext == 'json':
-        return jsonify({"id": work_id})
+    elif ext.startswith('json'):
+        return jsonify(entity_json)
+    elif ext.startswith('turtle'):
+        return entity.serialize(format='turtle')
     elif ['xml', 'rdf'].count(ext) > -1:
-        return "<rdf><title>{}</title></rdf>".format(work_id)
+        return work_rdf.serialize()
+
 
 
 def person_content(person_id, ext='html'):
-    marc_db = getattr(mongo_storage,
-                      catalog.config["MONGODB_DATABASE"])
-    bibframe_db = mongo_storage.bibframe
-    schema_org_db = mongo_storage.schema_org
-    person_id = ObjectId(person_id)
-    # Try schema org
-    person = schema_org_db.Person.find_one(
-        {"_id": person_id})
-    if person is None:
-        person = bibframe_db.find_one(
-            {"_id": person_id})
-    if person is None:
-        abort(404)
-    person['works'] = []
-    for result in schema_org_db.CreativeWork.find(
-        {'creator': str(person_id)},
-        {'headline', 'name'}):
-            person['works'].append(result)
+##    marc_db = getattr(mongo_storage,
+##                      catalog.config["MONGODB_DATABASE"])
+##    bibframe_db = mongo_storage.bibframe
+##    schema_org_db = mongo_storage.schema_org
+##    person_id = ObjectId(person_id)
+##    # Try schema org
+##    person = schema_org_db.Person.find_one(
+##        {"_id": person_id})
+##    if person is None:
+##        person = bibframe_db.find_one(
+##            {"_id": person_id})
+##    if person is None:
+##        abort(404)
+##    person['works'] = []
+##    for result in schema_org_db.CreativeWork.find(
+##        {'creator': str(person_id)},
+##        {'headline', 'name'}):
+##            person['works'].append(result)
+    person_url = urllib.parse.urljoin(
+        catalog.config["FEDORA_HOST"],
+        "rest/Person/{}".format(person_id))
+    person_rdf = rdflib.Graph().parse(person_url)
     if ext == 'html':
         return render_template('person.html',
             person=person,
@@ -268,29 +376,24 @@ def person(person_id):
     else:
         return person_content(person_id)
 
-@catalog.route("/Work/<work_id>", methods=['GET', 'POST'])
-@produces('application/json', 'application/rdf+xml', 'text/html')
-def work(work_id):
-    if 'application/json' in request.headers['Accept']:
-        return work_content(work_id, 'json')
-    elif 'application/rdf+xml' in request.headers['Accept']:
-        return work_content(work_id, 'xml')
-    else:
-        return work_content(work_id)
-
-
-
-
-
-
+##@catalog.route("/Work/<work_id>", methods=['GET', 'POST'])
+##@produces('application/json', 'application/rdf+xml', 'text/html')
+##def work(work_id):
+##    if 'application/json' in request.headers['Accept']:
+##        return work_content(work_id, 'json')
+##    elif 'application/rdf+xml' in request.headers['Accept']:
+##        return work_content(work_id, 'xml')
+##    else:
+##        return work_content(work_id)
 
 
 @catalog.route('/')
 def home():
-    marc_db = getattr(mongo_storage,
-                      catalog.config["MONGODB_DATABASE"])
-    facets = get_facets(redis_ds=redis_ds,
-                        mongo_collection=marc_db.marc_records)
+##    marc_db = getattr(mongo_storage,
+##                      catalog.config["MONGODB_DATABASE"])
+##    facets = get_facets(redis_ds=redis_ds,
+##                        mongo_collection=marc_db.marc_records)
+    facets = []
     return render_template('catalog.html',
                            facets=facets,
                            search_form=BasicSearch(),
