@@ -298,7 +298,7 @@ def cover_art(cover_id):
 def entity(entity_class, entity_id, ext='html'):
     entity_url = urllib.parse.urljoin(
         catalog.config["FEDORA_HOST"],
-        "rest/{}/{}".format(entity_class, entity_id))
+        "rest/bibframe/{}/{}".format(entity_class, entity_id))
     try:
         entity = rdflib.Graph().parse(entity_url)
     except urllib.error.HTTPError:
