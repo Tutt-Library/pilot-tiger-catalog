@@ -58,6 +58,7 @@ catalog.config.from_pyfile('catalog.cfg')
 
 BF_NS = rdflib.Namespace('http://bibframe.org/vocab/')
 SCHEMA_NS = rdflib.Namespace('http://schema.org/')
+BF_GRAPH = rdflib.Graph().parse('http://bibframe.org/vocab/')
 
 CONTEXT={
     "@vocab": "http://bibframe.org/vocab/",
@@ -292,13 +293,32 @@ def cover_art(cover_id):
         abort(404)
     return Response(raw_image, mimetype=mimetype)
 
+def entity_output(graph):
+    output = {}
+    for key, value in graph.items():
+        if not key.startswith("http://fedora") and\
+        not key.startswith("@") and\
+        not key.startswith("http://www.w3.org"):
+            label = BF_GRAPH.value(
+                subject=rdflib.URIRef("http://bibframe.org/vocab/{}".format(key)),
+                predicate=rdflib.URIRef(
+                'http://www.w3.org/2000/01/rdf-schema#label'))
+            print(key, label)
+            if label is not None:
+                output[str(label)] = value
+            else:
+                output[key] = value
+    output = OrderedDict(sorted(output.items()))
+    return output
+
+
 @catalog.route("/<entity_class>/<entity_id>")
 @catalog.route("/<entity_class>/<entity_id>.<ext>")
 @produces('application/json', 'application/rdf+xml', 'text/html')
 def entity(entity_class, entity_id, ext='html'):
     entity_url = urllib.parse.urljoin(
         catalog.config["FEDORA_HOST"],
-        "rest/bibframe/{}/{}".format(entity_class, entity_id))
+        "rest/{}/{}".format(entity_class, entity_id))
     try:
         entity = rdflib.Graph().parse(entity_url)
     except urllib.error.HTTPError:
@@ -308,20 +328,12 @@ def entity(entity_class, entity_id, ext='html'):
         context=CONTEXT).decode('utf-8'))
     output = {}
     if '@graph' in entity_json:
-
         for graph in entity_json['@graph']:
             if '@type' in graph and entity_class in graph['@type']:
-                for key, value in graph.items():
-                    if not key.startswith("http://fedora") and\
-                    not key.startswith("@") and\
-                    not key.startswith("http://www.w3.org"):
-                        output[key] = value
+                output = entity_output(graph)
+
     else:
-        for key, value in entity_json.items():
-            if not key.startswith("http://fedora") and\
-                    not key.startswith("@") and\
-                    not key.startswith("http://www.w3.org"):
-                        output[key] = value
+        output = entity_output(entity_json)
     if ext.startswith('html'):
         return render_template('detail.html',
                            cover_art_url=None,#cover_art_url,
