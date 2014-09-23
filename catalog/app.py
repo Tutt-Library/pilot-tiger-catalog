@@ -78,14 +78,19 @@ def get_entity(entity_id):
         SCHEMA_NS,
         rdflib.RDFS,
         rdflib.RDF]:
-        label = entity_rdf.value(subject=rdflib.URIRef(entity_id),
-                                  predicate=namespace.label)
-        if label is not None:
-            return html.format(
-                relative_url,
-                label)
-        title = entity_rdf.value(subject=rdflib.URIRef(entity_id),
-                                 predicate=namespace.titleValue)
+        try:
+            label = entity_rdf.value(subject=rdflib.URIRef(entity_id),
+                                     predicate=namespace.label)
+        except:
+            if label is not None:
+                return html.format(
+                    relative_url,
+                    label)
+        try:
+            title = entity_rdf.value(subject=rdflib.URIRef(entity_id),
+                                     predicate=namespace.titleValue)
+        except:
+            title = None
         if title is not None:
             return html.format(
                 relative_url,
@@ -171,9 +176,10 @@ def process_value(value):
                 output += "{}<br>".format(val)
     if type(value) == dict:
         if '@id' in value:
-            entity_rdf = rdflib.Graph().parse(value.get('@id'))
-##            except rdflib.plugin.PluginException:
-##                entity_rdf = rdflib.Graph()
+            try:
+                entity_rdf = rdflib.Graph().parse(value.get('@id'))
+            except ImportError:
+                return """<a href="{0}">{0}</a>""".format(value.get('@id'))
             relative_url = urllib.parse.urlsplit(value.get('@id')).path
             if relative_url.startswith("/rest"):
                 relative_url = relative_url.split("/rest")[-1]
@@ -316,16 +322,33 @@ def entity_output(graph):
 @catalog.route("/<entity_class>/<entity_id>.<ext>")
 @produces('application/json', 'application/rdf+xml', 'text/html')
 def entity(entity_class, entity_id, ext='html'):
-    entity_url = urllib.parse.urljoin(
-        catalog.config["FEDORA_HOST"],
-        "rest/{}/{}".format(entity_class, entity_id))
-    try:
-        entity = rdflib.Graph().parse(entity_url)
-    except urllib.error.HTTPError:
-        abort(404)
+    entity = None
+    for workspace in catalog.config.get(
+        "WORKSPACES",
+        ["bibframe", "schema"]):
+        entity_url = '/'.join([catalog.config["FEDORA_HOST"],
+                               'rest',
+                               workspace,
+                               entity_class,
+                               entity_id])
+        try:
+            entity = rdflib.Graph().parse(entity_url)
+            break
+        except urllib.error.HTTPError:
+            pass
+    # Try without a workspace
+    if entity is None:
+        entity_url = '/'.join([catalog.config["FEDORA_HOST"],
+                               'rest',
+                               entity_class,
+                               entity_id])
+        try:
+            entity = rdflib.Graph().parse(entity_url)
+        except urllib.error.HTTPError:
+            abort(404)
     entity_json = json.loads(entity.serialize(
-        format='json-ld',
-        context=CONTEXT).decode('utf-8'))
+                format='json-ld',
+                context=CONTEXT).decode('utf-8'))
     output = {}
     if '@graph' in entity_json:
         for graph in entity_json['@graph']:
