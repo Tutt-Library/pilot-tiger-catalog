@@ -16,7 +16,9 @@
   <div class="col-md-10">
    <h1>{{ entity|get_heading }}</h1>
    <p>{{ entity }}</p>
-   <p class="lead">by {{ entity['creator']|get_creators|safe }}{#{ work['_id']|get_creators|safe }#}</p>
+   {% if 'bf:creator' in entity or 'bf:contributor' in entity %}
+   <p class="lead">by {{ entity['bf:creator']|get_creators|safe }}{#{ work['_id']|get_creators|safe }#}</p>
+   {% endif %}
   </div>
   <div class="col-md-2">
    <div class="btn-group">
