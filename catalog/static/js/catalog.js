@@ -9,7 +9,7 @@ function groupify(a, n) {
 
 
 function ResultItem(searchResult) {
-   author = ko.observableArray(searchResult['author']);
+   author = ko.observableArray(searchResult['_source']['bf:responsibilityStatement']);
    coverURL = ko.observable(searchResult['coverURL']);
    displayReserveDialog = function() {
       $('#reserve-now-dlg').modal('show');
@@ -17,9 +17,9 @@ function ResultItem(searchResult) {
    instanceDetail = ko.observable(searchResult['instanceDetail']);
    instanceLocation = ko.observable(searchResult['instanceLocation']);
    show = ko.observable(searchResult['show']);
-   title = ko.observable(searchResult['title']);
+   title = ko.observable(searchResult['_source']['bf:titleStatement']);
    topics = ko.observable(searchResult['topics']);
-   workURL = ko.observable(searchResult['workURL']);
+   instanceURL = ko.observable("/" + searchResult['_id']);
 }
 
 function CatalogViewModel() {
@@ -193,7 +193,8 @@ function CatalogViewModel() {
              return;
             }
             self.searchResults.removeAll();
-            self.resultSize(self.prettyNumber(server_response["total"]));
+            self.resultSize(self.prettyNumber(server_response["hits"]["total"]));
+            
             if(server_response["total"] < 4) {
               self.resultEndSlice(server_response["total"]);
             }
@@ -201,17 +202,18 @@ function CatalogViewModel() {
   // self.resultEndSlice(server_response['total']);
   // }
             self.pageNumber(server_response['page']);
-            if(server_response["instances"].length > 0) {
+            if(server_response["hits"]["hits"].length > 0) {
                self.showResults(true);
-               var instances = server_response['instances'];
+               var instances = server_response['hits']['hits'];
                for(index in instances) {
                  var instance = instances[index];
+                 console.log(instance);
                  self.searchResults.push(new ResultItem(instance));
                }
               $(".instance-action").popover({ html: true });
           self.displayResultView();
              } else {
-              self.showError(true);
+              self.showError(true)['hits'];
               self.errorMessage("Your search " + '"' + self.searchQuery() + '"' + " Returned 0 Works");
             }
         });

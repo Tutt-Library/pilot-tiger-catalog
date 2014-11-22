@@ -38,6 +38,12 @@ try:
 except ImportError:
     sys.path.append("C:\\Users\\jernelson\\Development\\flask-fedora")
     from flask_fedora_commons import Repository
+
+try:
+    from bibframe_catalog.catalog.helpers.search import keyword_search, resource_search
+except ImportError:
+    sys.path.append("E:\\2014\\bibframe-catalog")
+    from catalog.helpers.search import keyword_search, resource_search
 ##from helpers.filters import get_facets
 ##from helpers import metrics
 ##from patron import patron, login_manager
@@ -62,6 +68,34 @@ CONTEXT={
 ##    "fcrepo": "http://fedora.info/definitions/v4/repository#",
 ##    "fedora": "http://fedora.info/definitions/v4/rest-api#",
     "@language": "en"}
+
+@catalog.template_filter('generate_cover_art_img')
+def generate_cover_art_img(entity_id):
+    cover_art_result = search.search(
+        index='bibframe',
+        doc_type='CoverArt',
+        body={
+		"query": {
+			"filtered": {
+				"filter": {
+					"term": {
+						"bf:coverArtFor": entity_id
+						}
+					}
+				}
+			}
+		}
+	)
+    if cover_art_result.get('hits').get('total') > 0:
+        return """<img src="{}" class="img-responsive img-thumbnail">""".format(
+            url_for('cover_art', cover_id=cover_art_result.get("_id")))
+    return ''
+
+
+
+
+
+
 
 
 def get_entity(entity_id):
@@ -98,12 +132,13 @@ def get_entity(entity_id):
 @catalog.template_filter('get_creators')
 def get_creators(creators):
     output = ''
-    if type(creators) == dict and '@id' in creators:
-        return get_entity(creators.get('@id'))
-    elif type(creators) == list:
+    if type(creators) == list:
         for creator in creators:
             if '@id' in creator:
                 output += "{},".format(get_entity(creator.get('@id')))
+            else:
+                entity = search.get_source(id=creator, index='bibframe')
+                output += "{},".format(get_heading(entity))
     if output.endswith(","):
         output = output[:-1]
     return output
@@ -130,6 +165,8 @@ def get_heading(entity):
 
     if 'bf:title' in entity:
         return get_value(entity['bf:title'])
+    if 'bf:titleValue' in entity:
+        return get_value(entity['bf:titleValue'])
     if 'bf:instanceTitle' in entity:
         return get_subject_value(entity['bf:instanceTitle'])
     if 'bf:workTitle' in entity:
@@ -138,6 +175,8 @@ def get_heading(entity):
         return get_value(entity['bf:name'])
     if 'bf:label' in entity:
         return get_value(entity['bf:label'])
+    if 'bf:classificationNumber' in entity:
+        return get_value(entity['bf:classificationNumber'])
 
 
 
@@ -158,11 +197,10 @@ def get_organization(org_str):
 def process_value(value):
     output = ''
     if search.exists(id=value, index='bibframe'):
-        print("IN value={} exists in search".format(value))
-        result = search.get(id=value, index='bibframe')
+        result = search.get_source(id=value, index='bibframe')
         return """<a href="{}">{}</a>""".format(
             url_for('uuid', uuid=value[0], ext='html'),
-            get_heading(result['_source'])
+            get_heading(result)
         )
     if type(value) == str or type(value) == bool:
         return value
@@ -318,10 +356,11 @@ def entity_output(graph):
 @catalog.route("/search", methods=['POST'])
 def search_index():
     term = request.form['q']
-    result = search.search(q=term, index='bibframe')
+    page = request.form['page']
+    result = search.search(q=term, index='bibframe', doc_type='Instance', from_=int(page))
     if result['hits'].get('total') > 0:
-        return jsonify(result['hits']['hits'])
-    return jsonify
+        return jsonify({"hits": result['hits'], "page": int(page)})
+    return jsonify()
 
 
 @catalog.route("/<entity_class>/<entity_id>")
@@ -380,12 +419,12 @@ def entity(entity_class, entity_id, ext='html'):
 @catalog.route('/<uuid>')
 @catalog.route("/<uuid>.<ext>")
 def uuid(uuid, ext='html'):
-    entity = search.get(id=uuid, index='bibframe')
+    entity = search.get_source(id=uuid, index='bibframe')
     if ext.startswith("htm"):
         return render_template('detail.html',
                                cover_art_url=None,#cover_art_url,
                                item=None,#get_item_details(work_id),
-                               entity=entity.get('_source'),
+                               entity=entity,
                                search_form=BasicSearch())
     elif ext.startswith("js"):
         return jsonify(entity)

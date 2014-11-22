@@ -15,8 +15,7 @@
 <div class="row">
   <div class="col-md-10">
    <h1>{{ entity|get_heading }}</h1>
-   <p>{{ entity }}</p>
-   {% if 'bf:creator' in entity or 'bf:contributor' in entity %}
+   {% if 'bf:creator' in entity %}
    <p class="lead">by {{ entity['bf:creator']|get_creators|safe }}{#{ work['_id']|get_creators|safe }#}</p>
    {% endif %}
   </div>
@@ -36,7 +35,8 @@
 </div>
 <div class="row">
   <div class="col-md-2">
-    <img src="{{ cover_art_url }}" class="img-responsive img-thumbnail">
+    {{ entity['fcrepo:uuid'][0]|generate_cover_art_img }}
+    {#<img src="{{ cover_art_url }}" class="img-responsive img-thumbnail">#}
   </div>
   <div class="col-md-6">
    <div class="well well-sm">
@@ -44,7 +44,11 @@
      {% for key, value in entity.items() %}
       <dt>{{ key }}</dt>
       <dd>
+        {% if key == 'fcrepo:uuid' %}
+        {{ value.0 }}        
+        {% else %}
         {{ value|process_value|safe }}
+        {% endif %}
       </dd>
      {% endfor %}
     </dl>
