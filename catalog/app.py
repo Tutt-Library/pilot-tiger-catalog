@@ -43,6 +43,7 @@ try:
     from bibframe_catalog.catalog.helpers.search import keyword_search, resource_search
 except ImportError:
     sys.path.append("E:\\2014\\bibframe-catalog")
+    import catalog.helpers.bibframe as bibframe
     from catalog.helpers.search import keyword_search, resource_search
 ##from helpers.filters import get_facets
 ##from helpers import metrics
@@ -93,9 +94,17 @@ def generate_cover_art_img(entity_id):
 
 
 
-
-
-
+def generate_url_or_string(value):
+    anchor_template = """<a href="{}">{}</a>"""
+    output = value
+    if bibframe.URL_CHECK_RE.search(value):
+        output = anchor_template.format(value, value)
+    elif search.exists(id=value, index='bibframe'):
+        result = search.get_source(id=value, index='bibframe')
+        output = anchor_template.format(
+            url_for('uuid', uuid=value, ext='html'),
+            get_heading(result))
+    return output
 
 
 def get_entity(entity_id):
@@ -175,8 +184,48 @@ def get_heading(entity):
         return get_value(entity['bf:name'])
     if 'bf:label' in entity:
         return get_value(entity['bf:label'])
+    if 'mads:authoritativeLabel' in entity:
+        return get_value(entity['mads:authoritativeLabel'])
     if 'bf:classificationNumber' in entity:
         return get_value(entity['bf:classificationNumber'])
+    if 'bf:identifierValue' in entity:
+        return get_value(entity['bf:identifierValue'])
+    if 'bf:Provider' in entity.get('type',[]):
+        provider = ''
+        if 'bf:providerName' in entity:
+            provider += get_heading(
+                search.get_source(
+                    id=entity['bf:providerName'],
+                    index='bibframe')
+                )
+        if 'bf:providerPlace' in entity:
+            if not get_value(entity['bf:providerPlace']).startswith("http"):
+                provider += ", {}".format(
+                    get_heading(
+                        search.get_source(
+                            id=entity['bf:providerPlace'],
+                            index='bibframe')
+                    )
+            )
+        if 'bf:providerDate' in entity:
+            provider += " {}".format(get_value(entity['bf:providerDate']))
+        if 'bf:copyrightDate' in entity:
+            provider += " {}".format(get_value(entity['bf:copyrightDate']))
+        return provider
+
+
+@catalog.template_filter('get_label')
+def get_label(property_name):
+    if property_name.startswith("bf"):
+        name = property_name.split(":")[-1]
+        bf_subject = getattr(bibframe.BF, name)
+        return str(BF_GRAPH.value(
+            subject=bf_subject,
+            predicate=rdflib.RDFS.label))
+    if property_name.startswith("fcrepo"):
+        return "Fedora Repository {}".format(property_name.split(":")[-1])
+    return property_name
+
 
 
 
@@ -196,40 +245,41 @@ def get_organization(org_str):
 @catalog.template_filter('process_value')
 def process_value(value):
     output = ''
-    if search.exists(id=value, index='bibframe'):
-        result = search.get_source(id=value, index='bibframe')
-        return """<a href="{}">{}</a>""".format(
-            url_for('uuid', uuid=value[0], ext='html'),
-            get_heading(result)
-        )
-    if type(value) == str or type(value) == bool:
+    if type(value) == str:
+        return generate_url_or_string(value)
+    if type(value) == bool:
         return value
     if type(value) == list:
         for val in value:
             if '@id' in val:
-                output += "{}<br>".format(get_entity(val['@id']))
+                output += "{}<br>".format(
+                    generate_url_or_string(get_entity(val['@id'])))
             else:
-                output += "{}<br>".format(val)
+                output += "{}<br>".format(
+                    generate_url_or_string(val))
     if type(value) == dict:
         if '@id' in value:
-            try:
-                entity_rdf = rdflib.Graph().parse(value.get('@id'))
-            except ImportError:
-                return """<a href="{0}">{0}</a>""".format(value.get('@id'))
-            relative_url = urllib.parse.urlsplit(value.get('@id')).path
-            if relative_url.startswith("/rest"):
-                relative_url = relative_url.split("/rest")[-1]
-            if value.get('@id').startswith("http://id.loc.gov"):
-                relative_url = value.get('@id')
-            for namespace in [
-                BF_NS,
-                SCHEMA_NS,
-                rdflib.RDFS]:
-                label = entity_rdf.value(
-                    subject=rdflib.URIRef(value.get('@id')),
-                    predicate=namespace.label)
-            output += """<a href="{}">{}</a><br>""".format(
-                    relative_url, label)
+            output += "{}<br>".format(
+                generate_url_or_string(value['@id']))
+
+##            try:
+##                entity_rdf = rdflib.Graph().parse(value.get('@id'))
+##            except ImportError:
+##                return """<a href="{0}">{0}</a>""".format(value.get('@id'))
+##            relative_url = urllib.parse.urlsplit(value.get('@id')).path
+##            if relative_url.startswith("/rest"):
+##                relative_url = relative_url.split("/rest")[-1]
+##            if value.get('@id').startswith("http://id.loc.gov"):
+##                relative_url = value.get('@id')
+##            for namespace in [
+##                BF_NS,
+##                SCHEMA_NS,
+##                rdflib.RDFS]:
+##                label = entity_rdf.value(
+##                    subject=rdflib.URIRef(value.get('@id')),
+##                    predicate=namespace.label)
+##            output += """<a href="{}">{}</a><br>""".format(
+##                    relative_url, label)
     return output
 
 

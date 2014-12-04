@@ -42,7 +42,7 @@
    <div class="well well-sm">
     <dl>
      {% for key, value in entity.items() %}
-      <dt>{{ key }}</dt>
+      <dt>{{ key|get_label }}</dt>
       <dd>
         {% if key == 'fcrepo:uuid' %}
         {{ value.0 }}        
