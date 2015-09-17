@@ -1,24 +1,22 @@
-{# START header #}
-<header>
- <div class="row">
-  {# START CC Logo #}
-  <div class="col-md-1">
-   <a href="/"><img src="{{ url_for('static', filename='img/tiger-logo.png') }}" style="float: right;height: 60px;width: auto; padding-top: .5em"></a>
-
-  {# END CC Logo #}
-  </div>
-  {# START Library Name #}
-  <div class="col-md-6">
-   <h1><a href="/" style="color: white">Tutt Library Catalog</a></h1>
-  {# END Library Name #}
-  </div>
-  {# START Library Hours #}
-  <div class="col-xs-6 col-sm-6 col-md-5">
-    <h3>M-T: 7:45 am-2 am F: 7:45 am-10 pm<br>
-        Sa: 10 am-5 pm Su: 10 am-2 am</h3>
-  {# END Library Hours #}
-  </div>
-</div>
-{# END header #}
+<header class="row container">
+	<div class='appLogo'><a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/bc-logo-blue.png') }}"></img></a></div>
+	<div class='appHeaderLogoSpacer'><img src="{{ url_for('static', filename='images/bc-logo-blue.png') }}"></img></div>
+	<div class="col-md-4 bibcatName">
+		<a href="{{ url_for('index') }}"><h1 class="bibcat bibcat-title">BIBCAT</h1></a>
+		<div class="masterMenu">
+		<div class="dropdown" style="position:relative">
+		  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+		    MENU
+		    <span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+		    <li><a href="http://104.131.39.41:5601/#" target="_blank">Kibana Link</a></li>
+		    <li><a href="{{ url_for('index', _external=True) }}#classcount">Class Counts</a></li>
+		  </ul>
+		</div>
+	</div>
+	</div>
+	<div class="col-md-8">
+	</div>
 </header>
-
+<hr class="bibcat">
